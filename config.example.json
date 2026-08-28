@@ -1,0 +1,40 @@
+{
+  "port": 8790,
+  "host": "127.0.0.1",
+  "upstream": "https://www.workbuddy.ai",
+  "platform": "workbuddy-ai",
+  "prefixPath": "/plugin",
+  "product": "SaaS",
+  "clientVersion": "5.4.2",
+  "ideType": "workbuddy-ai",
+  "ideName": "WorkBuddy AI",
+  "userAgent": "WorkBuddyAI/5.4.2",
+  "chatPath": "/v2/chat/completions",
+  "modelsPath": "/v3/config",
+  "systemPrompt": "You are a helpful assistant.",
+  "extraModels": [
+    {
+      "id": "hy4-preview",
+      "name": "Hy4-Preview",
+      "credits": "x0.00",
+      "vendor": "j",
+      "supportsToolCall": true,
+      "supportsImages": true,
+      "supportsReasoning": true,
+      "reasoning": {
+        "defaultEffort": "high",
+        "supportedEfforts": ["low", "high"],
+        "canDisableThinking": false
+      }
+    }
+  ],
+  "importAuthFile": "",
+  "proxyKey": "sk-wb-local-change-me",
+  "effortByModel": {},
+  "egress": {
+    "enabled": false,
+    "mode": "roundrobin",
+    "file": "proxies.txt",
+    "list": []
+  }
+}

@@ -1,0 +1,4 @@
+# one HTTP proxy per line (password is stored locally, never committed)
+# host:port:user:pass
+# http://user:pass@host:port
+# host:port

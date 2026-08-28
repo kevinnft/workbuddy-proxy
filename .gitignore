@@ -1,0 +1,8 @@
+node_modules/
+config.json
+accounts.json
+proxies.txt
+requests.jsonl
+*.tmp
+.DS_Store
+Thumbs.db

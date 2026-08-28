@@ -1,0 +1,16 @@
+[Unit]
+Description=WorkBuddy OpenAI-compatible local proxy
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=__WORKDIR__
+ExecStart=__NODE__ server.js
+Restart=on-failure
+RestartSec=3
+Environment=NODE_ENV=production
+NoNewPrivileges=true
+
+[Install]
+WantedBy=default.target

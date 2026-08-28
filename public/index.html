@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>WorkBuddy Console</title>
+  <style>
+    :root {
+      --bg: #0a0c10;
+      --surface: #10141b;
+      --panel: #151a22;
+      --line: #252c38;
+      --txt: #e7edf6;
+      --muted: #8b95a7;
+      --acc: #3dd68c;
+      --acc2: #5eb1ff;
+      --warn: #e8b84a;
+      --bad: #f07178;
+      --shadow: 0 8px 28px rgba(0,0,0,.35);
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; background: var(--bg); color: var(--txt); font: 13.5px/1.45 "Segoe UI", ui-sans-serif, system-ui, sans-serif; }
+    button, input, select, textarea { font: inherit; color: inherit; }
+    button { cursor: pointer; }
+    .app { display: grid; grid-template-columns: 220px 1fr; grid-template-rows: 56px 1fr; height: 100%; }
+    header {
+      grid-column: 1 / -1; display: flex; align-items: center; gap: 16px;
+      padding: 0 18px; border-bottom: 1px solid var(--line); background: var(--surface);
+    }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 650; letter-spacing: .02em; }
+    .logo { width: 22px; height: 22px; border-radius: 6px; background: linear-gradient(135deg,#3dd68c,#5eb1ff); }
+    .hdr-meta { color: var(--muted); font-size: 12px; }
+    .hdr-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+    nav { border-right: 1px solid var(--line); background: var(--surface); padding: 12px; }
+    .nav-btn {
+      width: 100%; text-align: left; background: transparent; border: 0; color: var(--muted);
+      padding: 9px 10px; border-radius: 8px; margin-bottom: 4px;
+    }
+    .nav-btn.active { background: #1c2430; color: var(--txt); }
+    .nav-btn:hover { background: #1a2029; color: var(--txt); }
+    main { min-width: 0; overflow: hidden; display: flex; flex-direction: column; }
+    .view { display: none; flex: 1; min-height: 0; }
+    .view.active { display: flex; flex-direction: column; }
+    .toolbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 14px 18px; border-bottom: 1px solid var(--line); }
+    .toolbar h2 { margin: 0; font-size: 15px; font-weight: 600; margin-right: auto; }
+    .btn {
+      background: #163228; color: var(--acc); border: 1px solid #245c45;
+      border-radius: 8px; padding: 7px 11px;
+    }
+    .btn.ghost { background: transparent; color: var(--txt); border-color: var(--line); }
+    .btn.bad { background: #2a1216; color: var(--bad); border-color: #5c242e; }
+    .btn:disabled { opacity: .45; cursor: default; }
+    .pill { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; padding: 3px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+    .pill.ok { color: var(--acc); border-color: #245c45; }
+    .pill.bad { color: var(--bad); border-color: #5c242e; }
+    .pill.warn { color: var(--warn); border-color: #5c4a1e; }
+    .switch { position: relative; width: 40px; height: 22px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; inset: 0; background: #2a3140; border-radius: 999px; transition: .15s; }
+    .slider:before { content: ""; position: absolute; height: 16px; width: 16px; left: 3px; top: 3px; background: #d7dee8; border-radius: 50%; transition: .15s; }
+    .switch input:checked + .slider { background: #1f6a48; }
+    .switch input:checked + .slider:before { transform: translateX(18px); background: var(--acc); }
+    .table-wrap { flex: 1; overflow: auto; padding: 0 18px 18px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { text-align: left; padding: 9px 8px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+    th { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; position: sticky; top: 0; background: var(--bg); }
+    tr:hover td { background: #121820; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 12px; }
+    .muted { color: var(--muted); }
+    .icon-btn { background: transparent; border: 1px solid transparent; color: var(--muted); border-radius: 6px; padding: 4px 8px; }
+    .icon-btn:hover { border-color: var(--line); color: var(--txt); }
+    .icon-btn.bad:hover { color: var(--bad); border-color: #5c242e; }
+    .add-box { padding: 0 18px 18px; }
+    textarea, input[type=text], select {
+      width: 100%; background: #0d1016; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px;
+    }
+    textarea { min-height: 72px; resize: vertical; }
+    .hint { color: var(--muted); font-size: 12px; margin-top: 8px; }
+    .ok { color: var(--acc); } .err { color: var(--bad); }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 18px; }
+    .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px; box-shadow: var(--shadow); }
+    .card h3 { margin: 0 0 10px; font-size: 13px; font-weight: 600; }
+    .kv { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+    .kv b { color: var(--txt); font-weight: 550; display: block; word-break: break-all; }
+    .msgs { flex: 1; overflow: auto; padding: 20px 24px; }
+    .msg { max-width: 820px; margin: 0 auto 14px; }
+    .msg .who { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+    .msg .body { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; white-space: pre-wrap; }
+    .msg.user .body { background: #152033; }
+    .composer { border-top: 1px solid var(--line); padding: 12px 16px; background: var(--surface); }
+    .composer-inner { max-width: 820px; margin: 0 auto; display: flex; gap: 8px; }
+    .composer-inner textarea { min-height: 46px; flex: 1; }
+    .empty { padding: 40px 18px; text-align: center; color: var(--muted); }
+    .stats { display: flex; gap: 8px; flex-wrap: wrap; }
+    label.small { display: block; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .07em; margin: 8px 0 6px; }
+    @media (max-width: 860px) { .app { grid-template-columns: 1fr; } nav { display: none; } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="brand"><div class="logo"></div>WorkBuddy Console</div>
+      <div class="hdr-meta" id="hdrMeta">127.0.0.1:8790</div>
+      <div class="hdr-right">
+        <span class="pill" id="statusPill">loading</span>
+        <span class="pill" id="egPill">egress off</span>
+        <label class="switch" title="Egress on/off">
+          <input type="checkbox" id="egSwitch" />
+          <span class="slider"></span>
+        </label>
+      </div>
+    </header>
+    <nav>
+      <button class="nav-btn active" data-view="chat">Chat</button>
+      <button class="nav-btn" data-view="requests">Requests</button>
+      <button class="nav-btn" data-view="models">Models</button>
+      <button class="nav-btn" data-view="proxies">Proxies</button>
+      <button class="nav-btn" data-view="accounts">Accounts</button>
+      <button class="nav-btn" data-view="settings">Settings</button>
+    </nav>
+    <main>
+      <section class="view active" id="view-chat">
+        <div class="toolbar">
+          <h2>Chat</h2>
+          <select id="model" style="width:240px"></select>
+          <span class="pill" id="effortBadge">reasoning default</span>
+        </div>
+        <div class="msgs" id="msgs"></div>
+        <div class="composer">
+          <div class="composer-inner">
+            <textarea id="prompt" placeholder="Ketik pesan… Enter kirim, Shift+Enter baris baru"></textarea>
+            <button class="btn" id="btnSend">Kirim</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="view-requests">
+        <div class="toolbar">
+          <h2>Requests</h2>
+          <span class="pill" id="reqCount">0</span>
+          <button class="btn ghost" id="btnReqRefresh">Refresh</button>
+          <button class="btn ghost" id="btnReqClear">Clear</button>
+        </div>
+        <div id="statsGrid" class="grid2" style="padding:14px 18px 0"></div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Waktu</th>
+                <th>Akun</th>
+                <th>Model</th>
+                <th>Reasoning</th>
+                <th>Proxy</th>
+                <th>IP</th>
+                <th>Tokens</th>
+                <th>ms</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="reqRows"></tbody>
+          </table>
+          <div class="empty" id="reqEmpty">Belum ada request.</div>
+        </div>
+      </section>
+
+      <section class="view" id="view-models">
+        <div class="toolbar">
+          <h2>Models</h2>
+          <span class="muted">Reasoning disimpan per model. Chat memakai setting ini.</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Model</th>
+                <th>Credits</th>
+                <th>Tingkat tersedia</th>
+                <th style="width:180px">Reasoning</th>
+              </tr>
+            </thead>
+            <tbody id="modelRows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="view" id="view-proxies">
+        <div class="toolbar">
+          <h2>HTTP proxies</h2>
+          <span class="pill" id="egMeta">0</span>
+          <select id="egMode" style="width:140px">
+            <option value="roundrobin">roundrobin</option>
+            <option value="sticky">sticky</option>
+          </select>
+          <button class="btn ghost" id="btnEgCheck">Health check</button>
+          <button class="btn bad" id="btnEgPrune">Hapus yang mati</button>
+          <button class="btn ghost" id="btnEgClear">Hapus semua</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:36px"><input type="checkbox" id="egSelAll" /></th>
+                <th>Host</th>
+                <th>Port</th>
+                <th>User</th>
+                <th>Status</th>
+                <th style="width:90px"></th>
+              </tr>
+            </thead>
+            <tbody id="egRows"></tbody>
+          </table>
+          <div class="empty" id="egEmpty">Belum ada proxy. Tempel list di bawah.</div>
+        </div>
+        <div class="add-box">
+          <div class="row" style="display:flex;gap:8px;align-items:flex-start">
+            <textarea id="egLines" placeholder="host:port:user:pass — satu per baris. Password tidak ditampilkan di tabel."></textarea>
+            <div style="display:flex;flex-direction:column;gap:8px;min-width:140px">
+              <button class="btn" id="btnEgAdd">Tambah</button>
+              <button class="btn ghost" id="btnEgDelSel">Hapus terpilih</button>
+            </div>
+          </div>
+          <div class="hint" id="egHint">Round-robin saat ON. Mati? Health check lalu hapus yang mati.</div>
+        </div>
+      </section>
+
+      <section class="view" id="view-accounts">
+        <div class="toolbar">
+          <h2>Accounts</h2>
+          <span class="pill" id="accRr">1 akun</span>
+          <button class="btn" id="btnLogin">Login browser</button>
+          <button class="btn ghost" id="btnImport">Import desktop</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Email</th><th>UID</th><th>Req</th><th>Tokens</th><th>Status</th></tr></thead>
+            <tbody id="accRows"></tbody>
+          </table>
+          <div class="hint" id="loginHint" style="padding:12px 0"></div>
+        </div>
+      </section>
+
+      <section class="view" id="view-settings">
+        <div class="toolbar"><h2>Settings</h2></div>
+        <div class="grid2">
+          <div class="card">
+            <h3>OpenAI endpoint</h3>
+            <div class="kv">Base URL<b class="mono" id="baseUrl">http://127.0.0.1:8790/v1</b></div>
+            <div class="kv">API key<b class="mono" id="apiKey">sk-wb-local-change-me</b></div>
+          </div>
+          <div class="card">
+            <h3>Upstream</h3>
+            <div class="kv">WorkBuddy chat<b>POST /v2/chat/completions</b></div>
+            <div class="kv">Reasoning field<b>reasoning_effort</b></div>
+            <div class="kv">Account rotation<b>otomatis jika &gt; 1 akun</b></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    let proxyKey = "sk-wb-local-change-me";
+    let loginTimer = null;
+    let modelsMeta = [];
+    let egHealth = {};
+    let lastEgress = { items: [], enabled: false, mode: "roundrobin", count: 0 };
+    let lastModelSig = "";
+    const PREF_MODEL = "wb.model";
+
+    function savedEffort(modelId) {
+      const m = modelsMeta.find((x) => x.id === modelId);
+      return (m && m.selected_effort) || "";
+    }
+
+    document.querySelectorAll(".nav-btn").forEach((btn) => {
+      btn.onclick = () => {
+        document.querySelectorAll(".nav-btn").forEach((b) => b.classList.remove("active"));
+        document.querySelectorAll(".view").forEach((v) => v.classList.remove("active"));
+        btn.classList.add("active");
+        $("view-" + btn.dataset.view).classList.add("active");
+      };
+    });
+
+    function fillEffort(modelId) {
+      const m = modelsMeta.find((x) => x.id === modelId) || {};
+      const efforts = m.reasoning_efforts || [];
+      const def = m.default_effort || "default";
+      const stored = savedEffort(modelId);
+      const pick = (stored && efforts.indexOf(stored) >= 0) ? stored : "";
+      const badge = $("effortBadge");
+      if (badge) {
+        badge.textContent = pick ? ("reasoning " + pick) : ("reasoning " + def);
+        badge.className = "pill" + (pick ? " ok" : "");
+      }
+    }
+
+    function currentEffort(modelId) {
+      const m = modelsMeta.find((x) => x.id === modelId) || {};
+      const efforts = m.reasoning_efforts || [];
+      const stored = savedEffort(modelId);
+      return (stored && efforts.indexOf(stored) >= 0) ? stored : "";
+    }
+
+    function renderModels() {
+      const box = $("modelRows");
+      if (!box) return;
+      box.innerHTML = modelsMeta.map((m) => {
+        const efforts = m.reasoning_efforts || [];
+        const def = m.default_effort || "";
+        const cur = m.selected_effort || "";
+        const opts = ['<option value="">default' + (def ? " (" + def + ")" : "") + "</option>"]
+          .concat(efforts.map((e) => '<option value="' + e + '"' + (e === cur ? " selected" : "") + ">" + e + "</option>"));
+        const avail = efforts.length ? efforts.join(" / ") : "fixed";
+        return "<tr><td><b>" + (m.name || m.id) + "</b><div class='muted mono'>" + m.id + "</div></td>" +
+          "<td class='muted'>" + (m.credits || "—") + "</td>" +
+          "<td class='muted'>" + avail + "</td>" +
+          "<td>" + (efforts.length
+            ? '<select class="effort-sel" data-id="' + m.id + '">' + opts.join("") + "</select>"
+            : '<span class="muted">—</span>') + "</td></tr>";
+      }).join("");
+      box.querySelectorAll(".effort-sel").forEach((sel) => {
+        sel.onchange = async () => {
+          const out = await jpost("/admin/effort", { model: sel.dataset.id, effort: sel.value });
+          if (out.ok && out.models) {
+            modelsMeta = out.models;
+            fillEffort($("model").value);
+            lastModelSig = modelsMeta.map((m) => m.id + ":" + (m.selected_effort || "")).join(",");
+            renderModels();
+          }
+        };
+      });
+    }
+
+    function addMsg(role, text) {
+      const el = document.createElement("div");
+      el.className = "msg " + role;
+      el.innerHTML = '<div class="who">' + role + '</div><div class="body"></div>';
+      el.querySelector(".body").textContent = text;
+      $("msgs").appendChild(el);
+      $("msgs").scrollTop = $("msgs").scrollHeight;
+      return el.querySelector(".body");
+    }
+
+    async function jget(url) {
+      const r = await fetch(url);
+      const t = await r.text();
+      try { return JSON.parse(t); } catch { return { error: t, status: r.status }; }
+    }
+    async function jpost(url, body) {
+      const r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body || {}) });
+      const t = await r.text();
+      try { return JSON.parse(t); } catch { return { error: t, status: r.status }; }
+    }
+
+    function renderProxies(eg) {
+      lastEgress = eg || lastEgress;
+      const items = lastEgress.items || [];
+      $("egEmpty").style.display = items.length ? "none" : "block";
+      $("egRows").innerHTML = items.map((it) => {
+        const h = egHealth[it.label];
+        let st = '<span class="pill">unknown</span>';
+        if (h) st = h.ok
+          ? '<span class="pill ok">' + (h.ip || "alive") + "</span>"
+          : '<span class="pill bad">dead</span>';
+        return '<tr data-label="' + it.label.replace(/"/g, "") + '">' +
+          '<td><input type="checkbox" class="eg-cb" /></td>' +
+          '<td class="mono">' + it.host + "</td>" +
+          "<td>" + it.port + "</td>" +
+          '<td class="muted">' + (it.user || "—") + "</td>" +
+          "<td>" + st + "</td>" +
+          '<td><button class="icon-btn bad eg-del">hapus</button></td></tr>';
+      }).join("");
+      $("egRows").querySelectorAll(".eg-del").forEach((btn) => {
+        btn.onclick = async () => {
+          const label = btn.closest("tr").dataset.label;
+          const out = await jpost("/admin/egress/remove", { label: label });
+          if (out.ok) { delete egHealth[label]; applyEgress(out.egress); }
+        };
+      });
+    }
+
+    function applyEgress(eg) {
+      if (!eg) return;
+      lastEgress = eg;
+      $("egSwitch").checked = !!eg.enabled;
+      $("egMode").value = eg.mode || "roundrobin";
+      $("egPill").textContent = eg.enabled ? "egress on · " + (eg.count || 0) : "egress off";
+      $("egPill").className = "pill" + (eg.enabled ? " ok" : "");
+      $("egMeta").textContent = (eg.count || 0) + " endpoints · " + (eg.mode || "roundrobin");
+      renderProxies(eg);
+    }
+
+    function fmtTime(ts) {
+      const d = new Date(ts);
+      return d.toLocaleTimeString();
+    }
+    function shortProxy(p) {
+      if (!p || p === "direct") return "direct";
+      const parts = String(p).split(":");
+      return parts[0] + (parts[1] ? ":" + parts[1] : "");
+    }
+    function renderRequests(list) {
+      list = list || [];
+      $("reqCount").textContent = list.length;
+      $("reqEmpty").style.display = list.length ? "none" : "block";
+      $("reqRows").innerHTML = list.map((r) => {
+        const tok = r.tokens || {};
+        const st = r.ok
+          ? '<span class="pill ok">' + (r.status || 200) + "</span>"
+          : '<span class="pill bad">' + (r.status || "err") + "</span>";
+        const tokens = (tok.prompt || 0) + " / " + (tok.completion || 0) +
+          (tok.reasoning ? " · r" + tok.reasoning : "");
+        return "<tr>" +
+          "<td class='muted'>" + fmtTime(r.ts) + "</td>" +
+          "<td>" + (r.account || "—") + "</td>" +
+          "<td class='mono'>" + (r.model || "—") + "</td>" +
+          "<td class='muted'>" + (r.effort || "default") + "</td>" +
+          "<td class='mono muted'>" + shortProxy(r.proxy) + "</td>" +
+          "<td class='mono'>" + (r.ip || "—") + "</td>" +
+          "<td>" + tokens + "</td>" +
+          "<td class='muted'>" + (r.ms || 0) + "</td>" +
+          "<td>" + st + (r.error ? "<div class='err'>" + r.error.slice(0, 80) + "</div>" : "") + "</td></tr>";
+      }).join("");
+    }
+
+    function renderStats(stats) {
+      const box = $("statsGrid");
+      if (!box || !stats) return;
+      const blocks = [
+        ["24 jam", stats.h24],
+        ["3 hari", stats.d3],
+        ["7 hari", stats.d7],
+        ["30 hari", stats.d30],
+      ];
+      box.innerHTML = blocks.map(([title, w]) => {
+        w = w || { requests: 0, tokens: 0, prompt: 0, completion: 0, reasoning: 0, models: [] };
+        const models = (w.models || []).map((m) =>
+          "<div class='muted'>" + m.id + " · " + m.requests + " req · " + m.tokens + " tok" +
+          (m.reasoning ? " · r" + m.reasoning : "") + "</div>"
+        ).join("") || "<div class='muted'>—</div>";
+        return "<div class='card'><h3>" + title + "</h3>" +
+          "<div class='kv'>Requests<b>" + (w.requests || 0) + "</b></div>" +
+          "<div class='kv'>Tokens<b>" + (w.tokens || 0) + "</b><span class='muted'> in " + (w.prompt || 0) + " / out " + (w.completion || 0) +
+          (w.reasoning ? " · reason " + w.reasoning : "") + "</span></div>" +
+          "<div class='kv'>Models</div>" + models + "</div>";
+      }).join("");
+    }
+
+    async function refreshState() {
+      const s = await jget("/admin/state");
+      if (!s.ok) { $("statusPill").textContent = "admin error"; $("statusPill").className = "pill bad"; return; }
+      proxyKey = s.proxy_key || proxyKey;
+      $("apiKey").textContent = proxyKey;
+      $("baseUrl").textContent = s.base_url || "http://127.0.0.1:8790/v1";
+      const n = (s.accounts || []).filter((a) => !a.disabled).length;
+      $("statusPill").textContent = n ? n + " akun" + (s.account_rr ? " · RR" : "") : "belum login";
+      $("statusPill").className = "pill" + (n ? " ok" : " warn");
+      $("accRr").textContent = s.account_rr ? "roundrobin ON" : "single account";
+      $("accRr").className = "pill" + (s.account_rr ? " ok" : "");
+      applyEgress(s.egress);
+      renderRequests(s.requests || []);
+      renderStats(s.stats);
+      $("accRows").innerHTML = (s.accounts || []).map((a) =>
+        "<tr><td>" + (a.email || "—") + "</td><td class='mono muted'>" + (a.uid || "").slice(0, 8) + "</td>" +
+        "<td>" + (a.requests || 0) + "</td><td>" + (a.tokens_in || 0) + " / " + (a.tokens_out || 0) + "</td>" +
+        "<td><span class='pill " + (a.disabled ? "bad" : "ok") + "'>" + (a.disabled ? "disabled" : "ready") + "</span></td></tr>"
+      ).join("");
+      const sel = $("model");
+      const cur = sel.value || localStorage.getItem(PREF_MODEL) || "";
+      modelsMeta = s.models || [];
+      sel.innerHTML = modelsMeta.map((m) => '<option value="' + m.id + '">' + (m.name || m.id) + (m.credits ? " · " + m.credits : "") + "</option>").join("");
+      if (cur) sel.value = cur;
+      if (!sel.value && modelsMeta[0]) sel.value = modelsMeta[0].id;
+      if (sel.value) localStorage.setItem(PREF_MODEL, sel.value);
+      fillEffort(sel.value);
+      const sig = modelsMeta.map((m) => m.id + ":" + (m.selected_effort || "")).join(",");
+      if (sig !== lastModelSig) {
+        lastModelSig = sig;
+        renderModels();
+      }
+    }
+
+    $("egSwitch").onchange = async () => {
+      const out = await jpost("/admin/egress", { enabled: $("egSwitch").checked });
+      if (out.ok) applyEgress(out.egress);
+    };
+    $("egMode").onchange = async () => {
+      const out = await jpost("/admin/egress", { mode: $("egMode").value });
+      if (out.ok) applyEgress(out.egress);
+    };
+    $("btnEgAdd").onclick = async () => {
+      const lines = $("egLines").value.split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
+      if (!lines.length) { $("egHint").innerHTML = '<span class="err">kosong</span>'; return; }
+      const out = await jpost("/admin/egress/add", { lines: lines });
+      if (out.ok) { $("egLines").value = ""; $("egHint").innerHTML = '<span class="ok">+' + lines.length + " · total " + out.egress.count + "</span>"; applyEgress(out.egress); }
+      else $("egHint").innerHTML = '<span class="err">' + (out.error || "gagal") + "</span>";
+    };
+    $("btnEgDelSel").onclick = async () => {
+      const labels = [...$("egRows").querySelectorAll("tr")].filter((tr) => tr.querySelector(".eg-cb").checked).map((tr) => tr.dataset.label);
+      if (!labels.length) return;
+      const out = await jpost("/admin/egress/remove", { labels: labels });
+      if (out.ok) { labels.forEach((l) => delete egHealth[l]); applyEgress(out.egress); $("egHint").innerHTML = '<span class="ok">hapus ' + labels.length + "</span>"; }
+    };
+    $("egSelAll").onchange = () => {
+      $("egRows").querySelectorAll(".eg-cb").forEach((cb) => { cb.checked = $("egSelAll").checked; });
+    };
+    $("btnEgClear").onclick = async () => {
+      if (!confirm("Hapus semua proxy?")) return;
+      const out = await jpost("/admin/egress", { list: [] });
+      if (out.ok) { egHealth = {}; applyEgress(out.egress); }
+    };
+    $("btnReqRefresh").onclick = () => refreshState();
+    $("btnReqClear").onclick = async () => {
+      await fetch("/admin/requests", { method: "DELETE" });
+      renderRequests([]);
+    };
+    $("btnEgCheck").onclick = async () => {
+      $("egHint").textContent = "checking…";
+      const out = await jpost("/admin/egress/check");
+      if (!out.ok) { $("egHint").innerHTML = '<span class="err">check gagal</span>'; return; }
+      egHealth = {};
+      let alive = 0, dead = 0;
+      (out.results || []).forEach((r) => { egHealth[r.label] = r; if (r.ok) alive++; else dead++; });
+      applyEgress(out.egress || lastEgress);
+      $("egHint").innerHTML = '<span class="ok">' + alive + " alive</span> · <span class=\"err\">" + dead + " dead</span>";
+    };
+    $("btnEgPrune").onclick = async () => {
+      $("egHint").textContent = "prune…";
+      const out = await jpost("/admin/egress/prune");
+      if (!out.ok) { $("egHint").innerHTML = '<span class="err">prune gagal</span>'; return; }
+      egHealth = {};
+      (out.results || []).forEach((r) => { if (r.ok) egHealth[r.label] = r; });
+      applyEgress(out.egress);
+      $("egHint").innerHTML = '<span class="ok">kept ' + out.kept + "</span> · hapus " + out.removed + " mati";
+    };
+
+    $("btnLogin").onclick = async () => {
+      $("loginHint").textContent = "membuka login…";
+      const out = await jpost("/admin/login/start");
+      if (!out.state) { $("loginHint").innerHTML = '<span class="err">' + (out.error || "gagal") + "</span>"; return; }
+      window.open(out.authUrl, "_blank");
+      $("loginHint").textContent = "selesaikan login di browser…";
+      if (loginTimer) clearInterval(loginTimer);
+      loginTimer = setInterval(async () => {
+        const p = await jget("/admin/login/poll?state=" + encodeURIComponent(out.state));
+        if (p.status === "ok") {
+          clearInterval(loginTimer);
+          $("loginHint").innerHTML = '<span class="ok">login ok: ' + (p.account && (p.account.email || p.account.uid)) + "</span>";
+          refreshState();
+        } else if (p.error) $("loginHint").innerHTML = '<span class="err">' + p.error + "</span>";
+      }, 2000);
+    };
+    $("btnImport").onclick = async () => {
+      const out = await jpost("/admin/import");
+      $("loginHint").innerHTML = out.ok
+        ? '<span class="ok">import: ' + (out.account && (out.account.email || out.account.uid)) + "</span>"
+        : '<span class="err">tidak ada sesi desktop</span>';
+      refreshState();
+    };
+
+    async function send() {
+      const text = $("prompt").value.trim();
+      if (!text) return;
+      $("prompt").value = "";
+      addMsg("user", text);
+      const bodyEl = addMsg("assistant", "…");
+      const r = await fetch("/v1/chat/completions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: "Bearer " + proxyKey },
+        body: JSON.stringify({
+          model: $("model").value || "default-model",
+          stream: true,
+          reasoning_effort: currentEffort($("model").value) || undefined,
+          messages: [{ role: "user", content: text }],
+        }),
+      });
+      if (!r.ok) { bodyEl.textContent = await r.text(); return; }
+      const reader = r.body.getReader();
+      const dec = new TextDecoder();
+      let acc = "", buf = "";
+      bodyEl.textContent = "";
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += dec.decode(value, { stream: true });
+        const parts = buf.split("\n\n");
+        buf = parts.pop() || "";
+        for (const part of parts) {
+          const line = part.split("\n").find((l) => l.startsWith("data:"));
+          if (!line) continue;
+          const data = line.slice(5).trim();
+          if (!data || data === "[DONE]") continue;
+          try {
+            const j = JSON.parse(data);
+            const d = j.choices && j.choices[0] && j.choices[0].delta;
+            if (d && d.content) { acc += d.content; bodyEl.textContent = acc; }
+          } catch {}
+        }
+        $("msgs").scrollTop = $("msgs").scrollHeight;
+      }
+      if (!acc) bodyEl.textContent = "(kosong)";
+    }
+
+    $("btnSend").onclick = send;
+    $("model").addEventListener("change", () => {
+      localStorage.setItem(PREF_MODEL, $("model").value);
+      fillEffort($("model").value);
+    });
+    $("prompt").addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
+    });
+
+    refreshState();
+    setInterval(refreshState, 30000);
+  </script>
+</body>
+</html>
