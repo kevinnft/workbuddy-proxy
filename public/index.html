@@ -54,6 +54,7 @@
     .pill.ok { color: var(--acc); border-color: #245c45; }
     .pill.bad { color: var(--bad); border-color: #5c242e; }
     .pill.warn { color: var(--warn); border-color: #5c4a1e; }
+    .pill.ver { color: var(--muted); font-size: 10.5px; padding: 2px 7px; font-family: ui-monospace, Consolas, monospace; }
     .switch { position: relative; width: 40px; height: 22px; }
     .switch input { opacity: 0; width: 0; height: 0; }
     .slider { position: absolute; inset: 0; background: #2a3140; border-radius: 999px; transition: .15s; }
@@ -91,6 +92,27 @@
     .composer-inner { max-width: 820px; margin: 0 auto; display: flex; gap: 8px; }
     .composer-inner textarea { min-height: 46px; flex: 1; }
     .empty { padding: 40px 18px; text-align: center; color: var(--muted); }
+    /* --- credits view (compact) --- */
+    #view-credits .toolbar { padding: 10px 18px; gap: 6px; }
+    #view-credits .toolbar h2 { font-size: 13px; }
+    #view-credits .btn { padding: 4px 9px; font-size: 12px; }
+    #view-credits .table-wrap { padding: 0 18px 14px; }
+    #view-credits table { font-size: 12px; }
+    #view-credits th, #view-credits td { padding: 5px 8px; }
+    #view-credits th { font-size: 10px; letter-spacing: .05em; }
+    #credKpis { display: flex; gap: 18px; align-items: baseline; margin-left: auto; }
+    .kpi { font-size: 11px; color: var(--muted); white-space: nowrap; }
+    .kpi b { display: inline; color: var(--txt); font-weight: 600; font-size: 12px; margin-left: 5px; }
+    .kpi b.ok { color: var(--acc); } .kpi b.warn { color: var(--warn); } .kpi b.bad { color: var(--bad); }
+    .pbar { height: 4px; background: #1e242e; border-radius: 999px; overflow: hidden; margin-top: 3px; max-width: 140px; }
+    .pbar > i { display: block; height: 100%; border-radius: 999px; }
+    .pkg { font-size: 12px; font-weight: 550; }
+    .pkgcode { font-size: 10px; color: var(--muted); font-family: ui-monospace, Consolas, monospace; }
+    .grp td { border-top: 1px solid #2b3340; }
+    .grp-first td { border-top: 1px solid var(--line); }
+    .num-cell { font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .lbl-daily { font-size: 9.5px; padding: 1px 5px; border-radius: 4px; border: 1px solid #5c4a1e; color: var(--warn); margin-left: 5px; }
+    #credMeta { font-size: 11px; }
     .stats { display: flex; gap: 8px; flex-wrap: wrap; }
     label.small { display: block; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .07em; margin: 8px 0 6px; }
     @media (max-width: 860px) { .app { grid-template-columns: 1fr; } nav { display: none; } }
@@ -101,6 +123,7 @@
     <header>
       <div class="brand"><div class="logo"></div>WorkBuddy Console</div>
       <div class="hdr-meta" id="hdrMeta">127.0.0.1:8790</div>
+      <span class="pill ver" id="verPill" title="versi aplikasi">v—</span>
       <div class="hdr-right">
         <span class="pill" id="statusPill">loading</span>
         <span class="pill" id="egPill">egress off</span>
@@ -116,6 +139,7 @@
       <button class="nav-btn" data-view="models">Models</button>
       <button class="nav-btn" data-view="proxies">Proxies</button>
       <button class="nav-btn" data-view="accounts">Accounts</button>
+      <button class="nav-btn" data-view="credits">Credits</button>
       <button class="nav-btn" data-view="settings">Settings</button>
     </nav>
     <main>
@@ -239,6 +263,36 @@
         </div>
       </section>
 
+      <section class="view" id="view-credits">
+        <div class="toolbar">
+          <h2>Credits</h2>
+          <button class="btn ghost" id="btnCredRefresh">Refresh</button>
+          <button class="btn ghost" id="btnCredForce">Force</button>
+          <span class="muted" id="credMeta"></span>
+          <div id="credKpis">
+            <span class="kpi">Sisa<b id="kpiLeft">—</b></span>
+            <span class="kpi">Terpakai<b id="kpiUsed">—</b></span>
+            <span class="kpi">Total<b id="kpiTotal">—</b></span>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:190px">Akun</th>
+                <th>Paket</th>
+                <th style="width:120px">Sisa</th>
+                <th style="width:80px">Terpakai</th>
+                <th style="width:70px">Total</th>
+                <th style="width:150px">Reset / Expire</th>
+              </tr>
+            </thead>
+            <tbody id="credRows"></tbody>
+          </table>
+          <div class="empty" id="credEmpty">Belum ada data credit.</div>
+        </div>
+      </section>
+
       <section class="view" id="view-settings">
         <div class="toolbar"><h2>Settings</h2></div>
         <div class="grid2">
@@ -249,6 +303,7 @@
           </div>
           <div class="card">
             <h3>Upstream</h3>
+            <div class="kv">Versi aplikasi<b class="mono" id="verText">—</b></div>
             <div class="kv">WorkBuddy chat<b>POST /v2/chat/completions</b></div>
             <div class="kv">Reasoning field<b>reasoning_effort</b></div>
             <div class="kv">Account rotation<b>otomatis jika &gt; 1 akun</b></div>
@@ -278,6 +333,7 @@
         document.querySelectorAll(".view").forEach((v) => v.classList.remove("active"));
         btn.classList.add("active");
         $("view-" + btn.dataset.view).classList.add("active");
+        if (btn.dataset.view === "credits") loadCredits(false);
       };
     });
 
@@ -423,6 +479,96 @@
       }).join("");
     }
 
+    function fmtDate(ts) {
+      if (!ts) return "—";
+      const d = new Date(ts);
+      return isNaN(d.getTime()) ? "—" : d.toLocaleDateString(undefined, { day: "2-digit", month: "short", year: "numeric" }) +
+        " " + d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+    }
+    function fmtNum(n) {
+      const v = Number(n) || 0;
+      return Number.isInteger(v) ? String(v) : v.toFixed(2);
+    }
+    function pctOf(left, total) {
+      return total > 0 ? Math.max(0, Math.min(100, (left / total) * 100)) : 0;
+    }
+    function toneOf(pct) {
+      return pct > 40 ? "ok" : pct > 15 ? "warn" : "bad";
+    }
+    function pbar(left, total) {
+      const pct = pctOf(left, total);
+      const col = pct > 40 ? "var(--acc)" : pct > 15 ? "var(--warn)" : "var(--bad)";
+      return '<div class="pbar"><i style="width:' + pct.toFixed(1) + "%;background:" + col + '"></i></div>';
+    }
+    function setKpi(id, text, tone) {
+      const el = $(id);
+      if (!el) return;
+      el.textContent = text;
+      el.className = tone || "";
+    }
+    function renderCredits(data) {
+      const list = (data && data.accounts) || [];
+      const rows = [];
+      let gLeft = 0, gUsed = 0, gTotal = 0, okCount = 0;
+      const esc = (s) => String(s == null ? "" : s).replace(/[<>&]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]));
+
+      list.forEach((a) => {
+        const acct = esc(a.account || "—");
+        if (!a.ok) {
+          rows.push('<tr class="grp-first"><td class="pkg">' + acct + "</td>" +
+            '<td colspan="5"><span class="err">' + esc(a.error || "gagal") + "</span></td></tr>");
+          return;
+        }
+        okCount++;
+        gLeft += a.usageLeft || 0;
+        gUsed += a.usageUsed || 0;
+        gTotal += a.usageTotal || 0;
+        const res = a.resources || [];
+        if (!res.length) {
+          rows.push('<tr class="grp-first"><td class="pkg">' + acct + "</td>" +
+            '<td class="muted" colspan="5">tidak ada paket aktif</td></tr>');
+          return;
+        }
+        res.forEach((r, i) => {
+          const when = r.isDaily ? r.refreshAt : r.expireAt;
+          const pct = pctOf(r.left, r.total);
+          rows.push('<tr class="' + (i === 0 ? "grp-first" : "grp") + '">' +
+            "<td>" + (i === 0 ? '<span class="pkg">' + acct + "</span>" : "") + "</td>" +
+            '<td><span class="pkg">' + esc(r.name) + "</span>" +
+              (r.isDaily ? '<span class="lbl-daily">harian</span>' : "") +
+              '<div class="pkgcode">' + esc(r.packageCode) + "</div></td>" +
+            '<td class="num-cell"><b class="' + toneOf(pct) + '">' + fmtNum(r.left) + "</b>" +
+              '<span class="muted"> ' + esc(r.unit) + "</span>" + pbar(r.left, r.total) + "</td>" +
+            '<td class="num-cell muted">' + fmtNum(r.used) + "</td>" +
+            '<td class="num-cell muted">' + fmtNum(r.total) + "</td>" +
+            '<td class="muted">' + fmtDate(when) + "</td></tr>");
+        });
+      });
+
+      $("credRows").innerHTML = rows.join("");
+      $("credEmpty").style.display = rows.length ? "none" : "block";
+
+      const pct = pctOf(gLeft, gTotal);
+      setKpi("kpiLeft", fmtNum(gLeft) + (gTotal ? " (" + pct.toFixed(0) + "%)" : ""), toneOf(pct));
+      setKpi("kpiUsed", fmtNum(gUsed), "");
+      setKpi("kpiTotal", fmtNum(gTotal), "");
+      $("credMeta").textContent = data && data.fetchedAt
+        ? okCount + "/" + list.length + " akun · " + new Date(data.fetchedAt).toLocaleTimeString()
+        : "";
+    }
+    async function loadCredits(force) {
+      $("credMeta").textContent = "memuat…";
+      const out = await jget("/admin/credits" + (force ? "?force=1" : ""));
+      if (out.error && !out.accounts) {
+        $("credMeta").innerHTML = '<span class="err">' + esc0(out.error) + "</span>";
+        return;
+      }
+      renderCredits(out);
+    }
+    function esc0(s) {
+      return String(s == null ? "" : s).slice(0, 120).replace(/[<>&]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]));
+    }
+
     function renderStats(stats) {
       const box = $("statsGrid");
       if (!box || !stats) return;
@@ -452,6 +598,11 @@
       proxyKey = s.proxy_key || proxyKey;
       $("apiKey").textContent = proxyKey;
       $("baseUrl").textContent = s.base_url || "http://127.0.0.1:8790/v1";
+      if (s.version) {
+        $("verPill").textContent = "v" + s.version;
+        $("verPill").title = "workbuddy-proxy v" + s.version;
+        $("verText").textContent = "v" + s.version;
+      }
       const n = (s.accounts || []).filter((a) => !a.disabled).length;
       $("statusPill").textContent = n ? n + " akun" + (s.account_rr ? " · RR" : "") : "belum login";
       $("statusPill").className = "pill" + (n ? " ok" : " warn");
@@ -609,6 +760,9 @@
     $("prompt").addEventListener("keydown", (e) => {
       if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
     });
+
+    $("btnCredRefresh").onclick = () => loadCredits(false);
+    $("btnCredForce").onclick = () => loadCredits(true);
 
     refreshState();
     setInterval(refreshState, 30000);

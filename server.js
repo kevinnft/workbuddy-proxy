@@ -11,6 +11,11 @@ const CFG_PATH = path.join(ROOT, "config.json");
 const ACC_PATH = path.join(ROOT, "accounts.json");
 const PUBLIC = path.join(ROOT, "public");
 
+const VERSION = (function () {
+  try { return JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8")).version || "0.0.0"; }
+  catch { return "0.0.0"; }
+})();
+
 const cfg = JSON.parse(fs.readFileSync(CFG_PATH, "utf8"));
 const PORT = Number(cfg.port || 8790);
 const HOST = cfg.host || "127.0.0.1";
@@ -891,6 +896,150 @@ async function pipeChat(up, res, wantStream, acc, upBody, t0) {
   send(res, 200, completion);
 }
 
+/* ---------------- credits (sisa credit) ---------------- */
+
+const COMMODITY_CODES = {
+  free: "TCACA_code_001_PqouKr6QWV",
+  proMon: "TCACA_code_002_AkiJS3ZHF5",
+  proMonPlus: "TCACA_code_005_maRGyrHhw1",
+  gift: "TCACA_code_006_DbXS0lrypC",
+  activity: "TCACA_code_007_nzdH5h4Nl0",
+  proYear: "TCACA_code_003_FAnt7lcmRT",
+  freeMon: "TCACA_code_008_cfWoLwvjU4",
+  extra: "TCACA_code_009_0XmEQc2xOf",
+  youth: "TCACA_code_023_4xbGhMrE6q",
+  advanced: "TCACA_code_026_BaESVICNoi",
+  flagship: "TCACA_code_027_0FCGVA6vSa",
+  bonus28: "TCACA_code_028_NtpWi0jzXs",
+  bonus29: "TCACA_code_029_6wCGEWquYy",
+  bonus30: "TCACA_code_030_BjSt89qTvr",
+  extra38: "TCACA_code_038_OhvqZtiPKr",
+  freeMonIntl: "TCACA_code_035_ArVxJcGDsm",
+  extraIntl: "TCACA_code_036_lupO5WgNdG",
+  bonusIntl: "TCACA_code_037_WxOD3MpI2o",
+  proTrialMon: "TCACA_code_039_KRcQj7wUat",
+  proTrialYear: "TCACA_code_040_mi9rCYg46x",
+};
+const DAILY_CREDITS = [COMMODITY_CODES.free];
+const PACKAGE_LABEL = {
+  [COMMODITY_CODES.free]: "Free Plan (harian)",
+  [COMMODITY_CODES.proMon]: "Pro Monthly",
+  [COMMODITY_CODES.proMonPlus]: "Pro Monthly+",
+  [COMMODITY_CODES.gift]: "Pro Trial Gift",
+  [COMMODITY_CODES.activity]: "Bonus Pack",
+  [COMMODITY_CODES.proYear]: "Pro Yearly",
+  [COMMODITY_CODES.freeMon]: "Pro Daily",
+  [COMMODITY_CODES.extra]: "Credit Package",
+  [COMMODITY_CODES.youth]: "Youth Plan",
+  [COMMODITY_CODES.advanced]: "Advanced Plan",
+  [COMMODITY_CODES.flagship]: "Flagship Plan",
+  [COMMODITY_CODES.bonus28]: "Bonus 28",
+  [COMMODITY_CODES.bonus29]: "Bonus 29",
+  [COMMODITY_CODES.bonus30]: "Bonus 30",
+  [COMMODITY_CODES.extra38]: "Credit Package",
+  [COMMODITY_CODES.freeMonIntl]: "Free Monthly (Intl)",
+  [COMMODITY_CODES.extraIntl]: "Extra (Intl)",
+  [COMMODITY_CODES.bonusIntl]: "Bonus (Intl)",
+  [COMMODITY_CODES.proTrialMon]: "Pro Trial Monthly",
+  [COMMODITY_CODES.proTrialYear]: "Pro Trial Yearly",
+};
+const creditsCache = { at: 0, ttlMs: 60000, perAccount: {} };
+
+function parseTime(t) {
+  if (!t) return 0;
+  if (typeof t === "string" && /^\d+$/.test(t)) return new Date(Number(t)).getTime();
+  const ms = new Date(t).getTime();
+  return isNaN(ms) ? 0 : ms;
+}
+
+function num(v) {
+  const n = Number(v);
+  return isFinite(n) ? n : 0;
+}
+
+function normalizeUsage(raw) {
+  const data = (raw && raw.data && raw.data.Response && raw.data.Response.Data) || {};
+  const accs = Array.isArray(data.Accounts) ? data.Accounts : [];
+  const resources = accs.map(function (r) {
+    const isDaily = DAILY_CREDITS.indexOf(r.PackageCode) >= 0;
+    const total = num(r.CycleCapacitySizePrecise) || num(r.CycleCapacitySize);
+    const left = num(r.CycleCapacityRemainPrecise) || num(r.CycleCapacityRemain);
+    const used = Math.max(0, total - left);
+    return {
+      id: r.ResourceId || "",
+      packageCode: r.PackageCode || "",
+      name: PACKAGE_LABEL[r.PackageCode] || r.PackageName || r.PackageCode || "—",
+      isDaily: isDaily,
+      total: Math.round(total * 100) / 100,
+      left: Math.round(left * 100) / 100,
+      used: Math.round(used * 100) / 100,
+      unit: r.CapacityUnit || "credits",
+      startAt: parseTime(r.DeductionStartTime) || parseTime(r.CycleStartTime) || 0,
+      expireAt: parseTime(isDaily ? r.CycleEndTime : r.DeductionEndTime),
+      refreshAt: isDaily ? 0 : parseTime(r.CycleEndTime) + 1000,
+      status: r.Status,
+      productName: r.ProductName || "",
+    };
+  });
+  resources.sort(function (a, b) {
+    return (a.expireAt || Infinity) - (b.expireAt || Infinity);
+  });
+  const totalLeft = resources.reduce(function (s, r) { return s + r.left; }, 0);
+  const totalUsed = resources.reduce(function (s, r) { return s + r.used; }, 0);
+  const totalSize = resources.reduce(function (s, r) { return s + r.total; }, 0);
+  return {
+    ok: true,
+    fetchedAt: now(),
+    usageLeft: Math.round(totalLeft * 100) / 100,
+    usageUsed: Math.round(totalUsed * 100) / 100,
+    usageTotal: Math.round(totalSize * 100) / 100,
+    resources: resources,
+    raw: { TotalCount: data.TotalCount || 0, TotalDosage: data.TotalDosage || 0 },
+  };
+}
+
+async function fetchCredits(acc, force) {
+  if (!acc) throw new Error("no account");
+  const key = acc.id || acc.uid || acc.email || "";
+  if (!force && creditsCache.perAccount[key] && now() - creditsCache.perAccount[key].fetchedAt < creditsCache.ttlMs) {
+    return Object.assign({}, creditsCache.perAccount[key], { cached: true });
+  }
+  const body = JSON.stringify({
+    PageNumber: 1,
+    PageSize: 100,
+    ProductCode: "p_tcaca",
+    Status: [0, 3],
+    OnlyValidPeriod: true,
+  });
+  const res = await upFetch(UPSTREAM + "/v2/billing/meter/get-user-resource", {
+    method: "POST",
+    headers: upstreamHeaders(acc, { Accept: "application/json", "Accept-Language": "en-US,en;q=0.9" }),
+    body: body,
+    stickyKey: key,
+  });
+  const txt = await res.text();
+  let j = null;
+  try { j = JSON.parse(txt); } catch {}
+  if (!res.ok || !j || j.code !== 0) {
+    throw new Error((j && (j.msg || j.error)) || ("HTTP " + res.status));
+  }
+  const out = normalizeUsage(j);
+  out.account = acc.email || acc.uid || acc.id;
+  creditsCache.perAccount[key] = out;
+  return out;
+}
+
+async function fetchAllCredits(force) {
+  const usable = usableAccounts();
+  if (!usable.length) throw new Error("no usable account");
+  const out = await Promise.all(usable.map(function (a) {
+    return fetchCredits(a, force).catch(function (e) {
+      return { ok: false, account: a.email || a.uid || a.id, error: String(e.message || e) };
+    });
+  }));
+  return { ok: true, fetchedAt: now(), accounts: out };
+}
+
 async function loginStart() {
   const res = await upFetch(UPSTREAM + "/v2" + PREFIX + "/auth/state?platform=" + encodeURIComponent(PLATFORM), {
     method: "POST",
@@ -990,7 +1139,25 @@ async function onRequest(req, res) {
 
   try {
     if (p === "/healthz" || p === "/health") {
-      send(res, 200, { ok: true, accounts: accounts.filter(function (a) { return !a.disabled; }).length });
+      send(res, 200, { ok: true, version: VERSION, accounts: accounts.filter(function (a) { return !a.disabled; }).length });
+      return;
+    }
+
+    if (p === "/v1/credits" && (req.method === "GET" || req.method === "POST")) {
+      if (!requireProxyKey(req, res)) return;
+      const force = url.searchParams.get("force") === "1" || url.searchParams.get("force") === "true";
+      const uid = url.searchParams.get("account") || "";
+      try {
+        if (uid) {
+          const acc = accounts.find(function (a) { return !a.disabled && (a.uid === uid || a.email === uid || a.id === uid); });
+          if (!acc) { send(res, 404, { error: { message: "account not found" } }); return; }
+          send(res, 200, await fetchCredits(acc, force));
+        } else {
+          send(res, 200, await fetchAllCredits(force));
+        }
+      } catch (e) {
+        send(res, 502, { error: { message: String(e.message || e), type: "upstream_error" } });
+      }
       return;
     }
 
@@ -1006,6 +1173,7 @@ async function onRequest(req, res) {
           base_url: "http://" + HOST + ":" + PORT + "/v1",
           proxy_key: PROXY_KEY,
           upstream: UPSTREAM,
+          version: VERSION,
           accounts: accounts.map(publicAccount),
           account_rr: usableAccounts().length > 1,
           models: openaiModels().data,
@@ -1014,6 +1182,16 @@ async function onRequest(req, res) {
           requests: publicRequests(40),
           stats: usageStats(),
         });
+        return;
+      }
+      if (p === "/admin/credits" && req.method === "GET") {
+        const force = url.searchParams.get("force") === "1" || url.searchParams.get("force") === "true";
+        try {
+          const data = await fetchAllCredits(force);
+          send(res, 200, data);
+        } catch (e) {
+          send(res, 502, { ok: false, error: String(e.message || e) });
+        }
         return;
       }
       if (p === "/admin/requests" && req.method === "GET") {

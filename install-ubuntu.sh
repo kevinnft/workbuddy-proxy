@@ -31,3 +31,5 @@ systemctl --user daemon-reload
 systemctl --user enable --now workbuddy-proxy.service
 echo "running at http://127.0.0.1:8790/"
 echo "logs: journalctl --user -u workbuddy-proxy -f"
+echo
+echo "after a git pull:  systemctl --user restart workbuddy-proxy"
