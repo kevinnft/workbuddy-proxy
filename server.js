@@ -19,6 +19,8 @@ const VERSION = (function () {
 const cfg = JSON.parse(fs.readFileSync(CFG_PATH, "utf8"));
 const PORT = Number(cfg.port || 8790);
 const HOST = cfg.host || "127.0.0.1";
+const PUBLIC_HOST = cfg.publicHost || (HOST === "0.0.0.0" || HOST === "::" ? "43.134.237.52" : HOST);
+const PUBLIC_ORIGIN = "http://" + PUBLIC_HOST + ":" + PORT;
 const UPSTREAM = String(cfg.upstream || "https://www.workbuddy.ai").replace(/\/+$/, "");
 const PLATFORM = cfg.platform || "workbuddy-ai";
 const PREFIX = cfg.prefixPath || "/plugin";
@@ -216,6 +218,8 @@ function now() {
 }
 
 function isLoopback(req) {
+  // Public bind (0.0.0.0) is an explicit operator choice; admin UI must work off-box.
+  if (HOST === "0.0.0.0" || HOST === "::") return true;
   const ip = req.socket.remoteAddress || "";
   return ip === "127.0.0.1" || ip === "::1" || ip === "::ffff:127.0.0.1";
 }
@@ -253,13 +257,82 @@ function bearer(req) {
   return "";
 }
 
-function requireProxyKey(req, res) {
-  const key = bearer(req);
-  if (key !== PROXY_KEY) {
+function parseCookies(req) {
+  const out = {};
+  String(req.headers.cookie || "").split(";").forEach(function (part) {
+    const i = part.indexOf("=");
+    if (i < 0) return;
+    const k = part.slice(0, i).trim();
+    const v = part.slice(i + 1).trim();
+    try { out[k] = decodeURIComponent(v); } catch { out[k] = v; }
+  });
+  return out;
+}
+
+function keysEqual(a, b) {
+  const aa = Buffer.from(String(a || ""));
+  const bb = Buffer.from(String(b || ""));
+  if (aa.length !== bb.length) return false;
+  return crypto.timingSafeEqual(aa, bb);
+}
+
+function extractKey(req, url) {
+  const b = bearer(req);
+  if (b) return b;
+  const h = req.headers["x-api-key"] || req.headers["x-proxy-key"];
+  if (h) return String(h).trim();
+  if (url) {
+    const q = url.searchParams.get("key") || url.searchParams.get("api_key");
+    if (q) return q;
+  }
+  const c = parseCookies(req).wb_key;
+  if (c) return c;
+  return "";
+}
+
+function keyOk(req, url) {
+  return keysEqual(extractKey(req, url), PROXY_KEY);
+}
+
+const COOKIE_TTL_SEC = 30 * 24 * 60 * 60; // 30 hari
+
+function cookieHeader(key, maxAge) {
+  const ttl = maxAge == null ? COOKIE_TTL_SEC : Number(maxAge);
+  const expires = ttl > 0
+    ? new Date(Date.now() + ttl * 1000).toUTCString()
+    : "Thu, 01 Jan 1970 00:00:00 GMT";
+  return "wb_key=" + encodeURIComponent(key || "") +
+    "; Path=/" +
+    "; HttpOnly" +
+    "; SameSite=Lax" +
+    "; Max-Age=" + ttl +
+    "; Expires=" + expires;
+}
+
+function maybeRefreshLoginCookie(req, res) {
+  const fromCookie = parseCookies(req).wb_key;
+  if (!fromCookie || !keysEqual(fromCookie, PROXY_KEY)) return;
+  res.setHeader("Set-Cookie", cookieHeader(fromCookie));
+}
+
+function requireProxyKey(req, res, url) {
+  if (!keyOk(req, url)) {
     send(res, 401, { error: { message: "Invalid API key", type: "invalid_request_error" } });
     return false;
   }
   return true;
+}
+
+function serveFile(res, file, extraHeaders) {
+  const ext = path.extname(file).toLowerCase();
+  const types = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8", ".json": "application/json", ".svg": "image/svg+xml", ".ico": "image/x-icon" };
+  const h = Object.assign({ "Content-Type": types[ext] || "application/octet-stream", "Cache-Control": "no-cache" }, extraHeaders || {});
+  res.writeHead(200, h);
+  fs.createReadStream(file).pipe(res);
+}
+
+function loginPagePath() {
+  return path.join(PUBLIC, "login.html");
 }
 
 function publicAccount(a) {
@@ -1128,23 +1201,75 @@ async function onRequest(req, res) {
   if (req.method === "OPTIONS") {
     res.writeHead(204, {
       "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Headers": "Authorization, Content-Type, X-WorkBuddy-Account",
+      "Access-Control-Allow-Headers": "Authorization, Content-Type, X-WorkBuddy-Account, X-Api-Key, X-Proxy-Key",
       "Access-Control-Allow-Methods": "GET,POST,DELETE,OPTIONS",
     });
     res.end();
     return;
   }
-  const url = new URL(req.url, "http://" + HOST + ":" + PORT);
+  const url = new URL(req.url, "http://" + (req.headers.host || PUBLIC_HOST + ":" + PORT));
   const p = url.pathname;
 
   try {
     if (p === "/healthz" || p === "/health") {
-      send(res, 200, { ok: true, version: VERSION, accounts: accounts.filter(function (a) { return !a.disabled; }).length });
+      send(res, 200, { ok: true, version: VERSION });
       return;
     }
 
+    if (p === "/login" && req.method === "GET") {
+      if (keyOk(req, url)) {
+        res.writeHead(302, { Location: "/" });
+        res.end();
+        return;
+      }
+      serveFile(res, loginPagePath());
+      return;
+    }
+
+    if (p === "/login" && req.method === "POST") {
+      const raw = await readBody(req);
+      const ct = String(req.headers["content-type"] || "");
+      let key = "";
+      if (ct.indexOf("application/json") >= 0) {
+        try {
+          const j = JSON.parse(raw.toString("utf8") || "{}");
+          key = String(j.key || j.api_key || "");
+        } catch { key = ""; }
+      } else {
+        const params = new URLSearchParams(raw.toString("utf8"));
+        key = params.get("key") || params.get("api_key") || "";
+      }
+      if (!keysEqual(key, PROXY_KEY)) {
+        res.writeHead(302, { Location: "/login?bad=1" });
+        res.end();
+        return;
+      }
+      res.writeHead(302, { Location: "/", "Set-Cookie": cookieHeader(key) });
+      res.end();
+      return;
+    }
+
+    if (p === "/logout") {
+      res.writeHead(302, { Location: "/login", "Set-Cookie": cookieHeader("", 0) });
+      res.end();
+      return;
+    }
+
+    if (!keyOk(req, url)) {
+      const accept = String(req.headers.accept || "");
+      const wantsHtml = req.method === "GET" && (p === "/" || p.endsWith(".html") || accept.indexOf("text/html") >= 0);
+      if (wantsHtml) {
+        res.writeHead(401, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-cache" });
+        fs.createReadStream(loginPagePath()).pipe(res);
+        return;
+      }
+      send(res, 401, { error: { message: "Invalid API key", type: "invalid_request_error" } });
+      return;
+    }
+    maybeRefreshLoginCookie(req, res);
+
     if (p === "/v1/credits" && (req.method === "GET" || req.method === "POST")) {
-      if (!requireProxyKey(req, res)) return;
+      if (!requireProxyKey(req, res, url)) return;
       const force = url.searchParams.get("force") === "1" || url.searchParams.get("force") === "true";
       const uid = url.searchParams.get("account") || "";
       try {
@@ -1162,16 +1287,15 @@ async function onRequest(req, res) {
     }
 
     if (p.startsWith("/admin/")) {
-      if (!isLoopback(req)) {
-        send(res, 403, { error: "admin is loopback-only" });
-        return;
-      }
       if (p === "/admin/state" && req.method === "GET") {
         const eg = pool.snapshot();
         send(res, 200, {
           ok: true,
-          base_url: "http://" + HOST + ":" + PORT + "/v1",
+          base_url: PUBLIC_ORIGIN + "/v1",
+          api_key: PROXY_KEY,
           proxy_key: PROXY_KEY,
+          host: PUBLIC_HOST,
+          port: PORT,
           upstream: UPSTREAM,
           version: VERSION,
           accounts: accounts.map(publicAccount),
@@ -1345,7 +1469,7 @@ async function onRequest(req, res) {
     }
 
     if (p === "/v1/models" && req.method === "GET") {
-      if (!requireProxyKey(req, res)) return;
+      if (!requireProxyKey(req, res, url)) return;
       const acc = pickAccount();
       if (acc && now() - modelsCache.at > 5 * 60 * 1000) {
         try { await fetchModels(acc); } catch {}
@@ -1355,7 +1479,7 @@ async function onRequest(req, res) {
     }
 
     if ((p === "/v1/chat/completions" || p === "/chat/completions") && req.method === "POST") {
-      if (!requireProxyKey(req, res)) return;
+      if (!requireProxyKey(req, res, url)) return;
       const raw = await readBody(req);
       const body = JSON.parse(raw.toString("utf8") || "{}");
       await handleChat(req, res, body);

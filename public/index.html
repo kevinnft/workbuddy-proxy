@@ -4,323 +4,1133 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>WorkBuddy Console</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #0a0c10;
-      --surface: #10141b;
-      --panel: #151a22;
-      --line: #252c38;
-      --txt: #e7edf6;
-      --muted: #8b95a7;
-      --acc: #3dd68c;
-      --acc2: #5eb1ff;
-      --warn: #e8b84a;
-      --bad: #f07178;
-      --shadow: 0 8px 28px rgba(0,0,0,.35);
+      --bg: #07090e;
+      --sidebar: #0c0f17;
+      --header: rgba(12, 15, 23, 0.85);
+      --card: rgba(15, 20, 30, 0.75);
+      --card-hover: rgba(22, 29, 43, 0.85);
+      --card-border: rgba(255, 255, 255, 0.07);
+      --border: rgba(255, 255, 255, 0.08);
+      --border-light: rgba(255, 255, 255, 0.04);
+      --text: #f1f5f9;
+      --text-muted: #8492a6;
+      --text-dim: #546274;
+      --accent: #6366f1;
+      --accent-glow: rgba(99, 102, 241, 0.35);
+      --acc: #10b981;
+      --acc-glow: rgba(16, 185, 129, 0.25);
+      --warn: #f59e0b;
+      --bad: #ef4444;
+      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.25);
+      --shadow-md: 0 12px 30px -10px rgba(0, 0, 0, 0.5);
+      --shadow-lg: 0 20px 40px -12px rgba(0, 0, 0, 0.7);
+      --font-main: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
     }
-    * { box-sizing: border-box; }
-    html, body { margin: 0; height: 100%; background: var(--bg); color: var(--txt); font: 13.5px/1.45 "Segoe UI", ui-sans-serif, system-ui, sans-serif; }
-    button, input, select, textarea { font: inherit; color: inherit; }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-main);
+      font-size: 13.5px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overflow: hidden;
+    }
+
+    button, input, select, textarea {
+      font-family: inherit;
+      color: inherit;
+      border: 0;
+      outline: none;
+    }
     button { cursor: pointer; }
-    .app { display: grid; grid-template-columns: 220px 1fr; grid-template-rows: 56px 1fr; height: 100%; }
+
+    /* --- APP LAYOUT --- */
+    .app {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      grid-template-rows: 60px 1fr;
+      height: 100vh;
+      background: 
+        radial-gradient(ellipse at 70% -10%, rgba(99, 102, 241, 0.08) 0%, transparent 60%),
+        radial-gradient(circle at 10% 20%, rgba(16, 185, 129, 0.04) 0%, transparent 40%),
+        var(--bg);
+    }
+
+    /* --- HEADER --- */
     header {
-      grid-column: 1 / -1; display: flex; align-items: center; gap: 16px;
-      padding: 0 18px; border-bottom: 1px solid var(--line); background: var(--surface);
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 0 24px;
+      background: var(--header);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      z-index: 100;
     }
-    .brand { display: flex; align-items: center; gap: 10px; font-weight: 650; letter-spacing: .02em; }
-    .logo { width: 22px; height: 22px; border-radius: 6px; background: linear-gradient(135deg,#3dd68c,#5eb1ff); }
-    .hdr-meta { color: var(--muted); font-size: 12px; }
-    .hdr-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
-    nav { border-right: 1px solid var(--line); background: var(--surface); padding: 12px; }
+
+    .brand-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 216px;
+      flex-shrink: 0;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 15px;
+      letter-spacing: -0.01em;
+      color: #ffffff;
+      text-decoration: none;
+    }
+    .brand-icon {
+      width: 30px;
+      height: 30px;
+      border-radius: 9px;
+      background: linear-gradient(135deg, #6366f1 0%, #06b6d4 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+      flex-shrink: 0;
+    }
+    .brand-icon svg {
+      width: 16px;
+      height: 16px;
+      stroke: #ffffff;
+      fill: none;
+      stroke-width: 2.2;
+    }
+
+    .hdr-divider {
+      width: 1px;
+      height: 24px;
+      background: var(--border);
+    }
+
+    .hdr-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-muted);
+      background: rgba(255, 255, 255, 0.03);
+      padding: 4px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border-light);
+    }
+    .hdr-meta .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 8px #10b981;
+      display: inline-block;
+    }
+
+    .hdr-right {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* --- SIDEBAR NAV --- */
+    nav {
+      background: var(--sidebar);
+      border-right: 1px solid var(--border);
+      padding: 16px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      overflow-y: auto;
+    }
+    .nav-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-dim);
+      padding: 12px 10px 4px;
+    }
     .nav-btn {
-      width: 100%; text-align: left; background: transparent; border: 0; color: var(--muted);
-      padding: 9px 10px; border-radius: 8px; margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      text-align: left;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 13px;
+      font-weight: 550;
+      padding: 9px 12px;
+      border-radius: 9px;
+      transition: all 0.15s ease;
+      position: relative;
     }
-    .nav-btn.active { background: #1c2430; color: var(--txt); }
-    .nav-btn:hover { background: #1a2029; color: var(--txt); }
-    main { min-width: 0; overflow: hidden; display: flex; flex-direction: column; }
-    .view { display: none; flex: 1; min-height: 0; }
-    .view.active { display: flex; flex-direction: column; }
-    .toolbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 14px 18px; border-bottom: 1px solid var(--line); }
-    .toolbar h2 { margin: 0; font-size: 15px; font-weight: 600; margin-right: auto; }
+    .nav-btn svg {
+      width: 17px;
+      height: 17px;
+      stroke-width: 1.9;
+      opacity: 0.75;
+      transition: all 0.15s ease;
+    }
+    .nav-btn:hover {
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text);
+    }
+    .nav-btn:hover svg {
+      opacity: 1;
+      color: var(--accent);
+    }
+    .nav-btn.active {
+      background: rgba(99, 102, 241, 0.12);
+      color: #ffffff;
+      font-weight: 600;
+      box-shadow: inset 0 0 0 1px rgba(99, 102, 241, 0.25);
+    }
+    .nav-btn.active svg {
+      opacity: 1;
+      color: #818cf8;
+    }
+    .nav-spacer { flex: 1; }
+
+    /* --- MAIN CONTENT AREA --- */
+    main {
+      min-width: 0;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+    .view {
+      display: none;
+      flex: 1;
+      min-height: 0;
+      animation: viewFade 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .view.active {
+      display: flex;
+      flex-direction: column;
+    }
+    @keyframes viewFade {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* --- TOOLBARS --- */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(12, 15, 23, 0.5);
+    }
+    .toolbar h2 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .toolbar-spacer { margin-right: auto; }
+
+    /* --- BUTTONS --- */
     .btn {
-      background: #163228; color: var(--acc); border: 1px solid #245c45;
-      border-radius: 8px; padding: 7px 11px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 8px;
+      padding: 7px 14px;
+      font-size: 12.5px;
+      font-weight: 600;
+      box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3);
+      transition: all 0.18s ease;
     }
-    .btn.ghost { background: transparent; color: var(--txt); border-color: var(--line); }
-    .btn.bad { background: #2a1216; color: var(--bad); border-color: #5c242e; }
-    .btn:disabled { opacity: .45; cursor: default; }
-    .pill { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; padding: 3px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
-    .pill.ok { color: var(--acc); border-color: #245c45; }
-    .pill.bad { color: var(--bad); border-color: #5c242e; }
-    .pill.warn { color: var(--warn); border-color: #5c4a1e; }
-    .pill.ver { color: var(--muted); font-size: 10.5px; padding: 2px 7px; font-family: ui-monospace, Consolas, monospace; }
-    .switch { position: relative; width: 40px; height: 22px; }
+    .btn:hover {
+      background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+      box-shadow: 0 4px 14px rgba(79, 70, 229, 0.45);
+      transform: translateY(-1px);
+    }
+    .btn:active { transform: translateY(0); }
+    .btn.ghost {
+      background: rgba(255, 255, 255, 0.035);
+      color: var(--text);
+      border: 1px solid var(--border);
+      box-shadow: none;
+    }
+    .btn.ghost:hover {
+      background: rgba(255, 255, 255, 0.07);
+      border-color: rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+    }
+    .btn.bad {
+      background: rgba(239, 68, 68, 0.12);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.28);
+      box-shadow: none;
+    }
+    .btn.bad:hover {
+      background: rgba(239, 68, 68, 0.22);
+      border-color: rgba(239, 68, 68, 0.4);
+      color: #fca5a5;
+    }
+    .btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      transform: none !important;
+      box-shadow: none !important;
+    }
+
+    /* --- PILLS & BADGES --- */
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11.5px;
+      font-weight: 550;
+      padding: 3px 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      white-space: nowrap;
+      transition: all 0.15s ease;
+    }
+    .pill.ok {
+      color: #34d399;
+      background: rgba(16, 185, 129, 0.1);
+      border-color: rgba(16, 185, 129, 0.28);
+    }
+    .pill.bad {
+      color: #f87171;
+      background: rgba(239, 68, 68, 0.1);
+      border-color: rgba(239, 68, 68, 0.28);
+    }
+    .pill.warn {
+      color: #fbbf24;
+      background: rgba(245, 158, 11, 0.1);
+      border-color: rgba(245, 158, 11, 0.28);
+    }
+    .pill.ver {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: #94a3b8;
+      background: rgba(255, 255, 255, 0.03);
+      padding: 3px 8px;
+    }
+
+    /* --- SWITCH TOGGLE --- */
+    .switch-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .switch {
+      position: relative;
+      width: 38px;
+      height: 20px;
+      display: inline-block;
+    }
     .switch input { opacity: 0; width: 0; height: 0; }
-    .slider { position: absolute; inset: 0; background: #2a3140; border-radius: 999px; transition: .15s; }
-    .slider:before { content: ""; position: absolute; height: 16px; width: 16px; left: 3px; top: 3px; background: #d7dee8; border-radius: 50%; transition: .15s; }
-    .switch input:checked + .slider { background: #1f6a48; }
-    .switch input:checked + .slider:before { transform: translateX(18px); background: var(--acc); }
-    .table-wrap { flex: 1; overflow: auto; padding: 0 18px 18px; }
-    table { width: 100%; border-collapse: collapse; }
-    th, td { text-align: left; padding: 9px 8px; border-bottom: 1px solid var(--line); vertical-align: middle; }
-    th { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; position: sticky; top: 0; background: var(--bg); }
-    tr:hover td { background: #121820; }
-    .mono { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 12px; }
-    .muted { color: var(--muted); }
-    .icon-btn { background: transparent; border: 1px solid transparent; color: var(--muted); border-radius: 6px; padding: 4px 8px; }
-    .icon-btn:hover { border-color: var(--line); color: var(--txt); }
-    .icon-btn.bad:hover { color: var(--bad); border-color: #5c242e; }
-    .add-box { padding: 0 18px 18px; }
-    textarea, input[type=text], select {
-      width: 100%; background: #0d1016; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px;
+    .slider {
+      position: absolute;
+      inset: 0;
+      background: #1f2733;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 999px;
+      transition: 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      cursor: pointer;
     }
-    textarea { min-height: 72px; resize: vertical; }
-    .hint { color: var(--muted); font-size: 12px; margin-top: 8px; }
-    .ok { color: var(--acc); } .err { color: var(--bad); }
-    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 18px; }
-    .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px; box-shadow: var(--shadow); }
-    .card h3 { margin: 0 0 10px; font-size: 13px; font-weight: 600; }
-    .kv { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
-    .kv b { color: var(--txt); font-weight: 550; display: block; word-break: break-all; }
-    .msgs { flex: 1; overflow: auto; padding: 20px 24px; }
-    .msg { max-width: 820px; margin: 0 auto 14px; }
-    .msg .who { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
-    .msg .body { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; white-space: pre-wrap; }
-    .msg.user .body { background: #152033; }
-    .composer { border-top: 1px solid var(--line); padding: 12px 16px; background: var(--surface); }
-    .composer-inner { max-width: 820px; margin: 0 auto; display: flex; gap: 8px; }
-    .composer-inner textarea { min-height: 46px; flex: 1; }
-    .empty { padding: 40px 18px; text-align: center; color: var(--muted); }
-    /* --- credits view (compact) --- */
-    #view-credits .toolbar { padding: 10px 18px; gap: 6px; }
-    #view-credits .toolbar h2 { font-size: 13px; }
-    #view-credits .btn { padding: 4px 9px; font-size: 12px; }
-    #view-credits .table-wrap { padding: 0 18px 14px; }
-    #view-credits table { font-size: 12px; }
-    #view-credits th, #view-credits td { padding: 5px 8px; }
-    #view-credits th { font-size: 10px; letter-spacing: .05em; }
-    #credKpis { display: flex; gap: 18px; align-items: baseline; margin-left: auto; }
-    .kpi { font-size: 11px; color: var(--muted); white-space: nowrap; }
-    .kpi b { display: inline; color: var(--txt); font-weight: 600; font-size: 12px; margin-left: 5px; }
-    .kpi b.ok { color: var(--acc); } .kpi b.warn { color: var(--warn); } .kpi b.bad { color: var(--bad); }
-    .pbar { height: 4px; background: #1e242e; border-radius: 999px; overflow: hidden; margin-top: 3px; max-width: 140px; }
-    .pbar > i { display: block; height: 100%; border-radius: 999px; }
-    .pkg { font-size: 12px; font-weight: 550; }
-    .pkgcode { font-size: 10px; color: var(--muted); font-family: ui-monospace, Consolas, monospace; }
-    .grp td { border-top: 1px solid #2b3340; }
-    .grp-first td { border-top: 1px solid var(--line); }
-    .num-cell { font-variant-numeric: tabular-nums; white-space: nowrap; }
-    .lbl-daily { font-size: 9.5px; padding: 1px 5px; border-radius: 4px; border: 1px solid #5c4a1e; color: var(--warn); margin-left: 5px; }
-    #credMeta { font-size: 11px; }
-    .stats { display: flex; gap: 8px; flex-wrap: wrap; }
-    label.small { display: block; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .07em; margin: 8px 0 6px; }
-    @media (max-width: 860px) { .app { grid-template-columns: 1fr; } nav { display: none; } }
+    .slider:before {
+      content: "";
+      position: absolute;
+      height: 14px;
+      width: 14px;
+      left: 2px;
+      top: 2px;
+      background: #cbd5e1;
+      border-radius: 50%;
+      transition: 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+    }
+    .switch input:checked + .slider {
+      background: #10b981;
+      border-color: #10b981;
+    }
+    .switch input:checked + .slider:before {
+      transform: translateX(18px);
+      background: #ffffff;
+    }
+
+    /* --- FORM CONTROLS --- */
+    select, input[type=text], textarea {
+      background: rgba(12, 16, 24, 0.85);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 13px;
+      color: var(--text);
+      transition: all 0.15s ease;
+    }
+    select {
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238492a6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      padding-right: 32px;
+    }
+    select:focus, input[type=text]:focus, textarea:focus {
+      border-color: var(--accent);
+      background: rgba(16, 21, 32, 0.95);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+    }
+    textarea {
+      min-height: 72px;
+      resize: vertical;
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      line-height: 1.5;
+    }
+
+    /* --- TABLES --- */
+    .table-wrap {
+      flex: 1;
+      overflow: auto;
+      padding: 20px 24px;
+    }
+    .table-card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    th, td {
+      text-align: left;
+      padding: 11px 14px;
+      border-bottom: 1px solid var(--border-light);
+      vertical-align: middle;
+    }
+    th {
+      color: var(--text-dim);
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      position: sticky;
+      top: 0;
+      background: rgba(14, 18, 26, 0.96);
+      backdrop-filter: blur(8px);
+      z-index: 10;
+      border-bottom: 1px solid var(--border);
+    }
+    tbody tr {
+      transition: background 0.12s ease;
+    }
+    tbody tr:hover td {
+      background: rgba(255, 255, 255, 0.025);
+    }
+    tbody tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .mono { font-family: var(--font-mono); font-size: 12px; }
+    .muted { color: var(--text-muted); }
+    .ok { color: #34d399; }
+    .err { color: #f87171; }
+
+    .icon-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 12px;
+      transition: all 0.15s ease;
+    }
+    .icon-btn:hover {
+      border-color: var(--border);
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .icon-btn.bad:hover {
+      color: #f87171;
+      border-color: rgba(239, 68, 68, 0.3);
+      background: rgba(239, 68, 68, 0.1);
+    }
+
+    .empty {
+      padding: 48px 24px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 13.5px;
+    }
+    .hint {
+      color: var(--text-muted);
+      font-size: 12.5px;
+      line-height: 1.5;
+    }
+
+    /* --- CARDS & GRID --- */
+    .grid2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      padding: 20px 24px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: var(--shadow-sm);
+      transition: border-color 0.2s ease;
+    }
+    .card:hover {
+      border-color: rgba(255, 255, 255, 0.12);
+    }
+    .card h3 {
+      margin: 0 0 14px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card h3 svg {
+      width: 16px;
+      height: 16px;
+      color: var(--accent);
+    }
+    .kv {
+      font-size: 12.5px;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+    .kv b {
+      color: var(--text);
+      font-weight: 600;
+      display: block;
+      margin-top: 3px;
+      word-break: break-all;
+    }
+    .kv b.mono {
+      font-size: 12px;
+      padding: 4px 8px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 6px;
+      border: 1px solid var(--border-light);
+      display: inline-block;
+      margin-top: 4px;
+    }
+
+    /* --- CHAT VIEW --- */
+    #view-chat {
+      display: none;
+      flex-direction: column;
+      height: 100%;
+    }
+    #view-chat.active {
+      display: flex;
+    }
+    .msgs {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .msg {
+      max-width: 840px;
+      width: 100%;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+    }
+    .msg .who {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-dim);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .msg .body {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 13.5px;
+      line-height: 1.6;
+      box-shadow: var(--shadow-sm);
+    }
+    .msg.user .who { color: #818cf8; }
+    .msg.user .body {
+      background: rgba(99, 102, 241, 0.1);
+      border-color: rgba(99, 102, 241, 0.25);
+    }
+    .msg.assistant .who { color: #34d399; }
+    .msg.assistant .body {
+      background: rgba(18, 24, 35, 0.85);
+    }
+    .composer {
+      border-top: 1px solid var(--border);
+      padding: 16px 24px;
+      background: rgba(11, 14, 21, 0.75);
+      backdrop-filter: blur(12px);
+    }
+    .composer-inner {
+      max-width: 840px;
+      margin: 0 auto;
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+    }
+    .composer-inner textarea {
+      min-height: 48px;
+      max-height: 180px;
+      flex: 1;
+      font-family: inherit;
+      font-size: 13.5px;
+      padding: 12px 14px;
+      border-radius: 10px;
+    }
+    .composer-inner button {
+      height: 48px;
+      padding: 0 20px;
+      border-radius: 10px;
+      font-size: 13.5px;
+    }
+
+    /* --- CREDITS VIEW (KPI CARDS) --- */
+    #credKpis {
+      display: flex;
+      gap: 14px;
+      margin-left: auto;
+      align-items: center;
+    }
+    .kpi {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      background: rgba(255, 255, 255, 0.035);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 5px 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .kpi b {
+      color: #ffffff;
+      font-size: 13px;
+      font-weight: 700;
+      font-family: var(--font-mono);
+    }
+    .kpi b.ok { color: #34d399; }
+    .kpi b.warn { color: #fbbf24; }
+    .kpi b.bad { color: #f87171; }
+
+    .pbar {
+      height: 5px;
+      background: rgba(255, 255, 255, 0.07);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-top: 5px;
+      max-width: 140px;
+    }
+    .pbar > i {
+      display: block;
+      height: 100%;
+      border-radius: 999px;
+      transition: width 0.3s ease;
+    }
+    .pkg { font-weight: 600; color: #ffffff; }
+    .pkgcode { font-size: 11px; color: var(--text-dim); font-family: var(--font-mono); margin-top: 2px; }
+    .num-cell { font-family: var(--font-mono); font-size: 12.5px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .lbl-daily {
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: 4px;
+      background: rgba(245, 158, 11, 0.12);
+      border: 1px solid rgba(245, 158, 11, 0.28);
+      color: #fbbf24;
+      margin-left: 6px;
+      font-weight: 600;
+    }
+
+    /* --- PROXY ADD BOX --- */
+    .add-box {
+      padding: 0 24px 24px;
+    }
+    .add-card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 16px;
+    }
+
+    /* --- TOAST NOTIFICATION --- */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: rgba(16, 22, 32, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+      padding: 10px 16px;
+      border-radius: 9px;
+      font-size: 13px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+      display: none;
+      align-items: center;
+      gap: 8px;
+      z-index: 1000;
+      animation: toastIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes toastIn {
+      from { transform: translateY(10px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    @media (max-width: 900px) {
+      .app { grid-template-columns: 1fr; }
+      nav { display: none; }
+      .brand-wrap { width: auto; }
+      .grid2 { grid-template-columns: 1fr; }
+      #credKpis { display: none; }
+    }
   </style>
 </head>
 <body>
   <div class="app">
+    <!-- HEADER -->
     <header>
-      <div class="brand"><div class="logo"></div>WorkBuddy Console</div>
-      <div class="hdr-meta" id="hdrMeta">127.0.0.1:8790</div>
-      <span class="pill ver" id="verPill" title="versi aplikasi">v—</span>
+      <div class="brand-wrap">
+        <a class="brand" href="/">
+          <div class="brand-icon">
+            <svg viewBox="0 0 24 24">
+              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
+            </svg>
+          </div>
+          <span>WorkBuddy</span>
+        </a>
+      </div>
+
+      <div class="hdr-meta">
+        <span class="dot"></span>
+        <span id="hdrMeta">43.134.237.52:8790</span>
+      </div>
+
+      <span class="pill ver" id="verPill" title="Versi WorkBuddy Proxy">v—</span>
+
       <div class="hdr-right">
-        <span class="pill" id="statusPill">loading</span>
+        <span class="pill" id="statusPill">memuat…</span>
         <span class="pill" id="egPill">egress off</span>
-        <label class="switch" title="Egress on/off">
-          <input type="checkbox" id="egSwitch" />
-          <span class="slider"></span>
-        </label>
+
+        <div class="switch-wrap" title="Egress proxy round-robin ON / OFF">
+          <label class="switch">
+            <input type="checkbox" id="egSwitch" />
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <a class="btn ghost" href="/logout" style="text-decoration:none;padding:5px 12px;font-size:12px">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+          <span>Keluar</span>
+        </a>
       </div>
     </header>
+
+    <!-- SIDEBAR NAVIGATION -->
     <nav>
-      <button class="nav-btn active" data-view="chat">Chat</button>
-      <button class="nav-btn" data-view="requests">Requests</button>
-      <button class="nav-btn" data-view="models">Models</button>
-      <button class="nav-btn" data-view="proxies">Proxies</button>
-      <button class="nav-btn" data-view="accounts">Accounts</button>
-      <button class="nav-btn" data-view="credits">Credits</button>
-      <button class="nav-btn" data-view="settings">Settings</button>
+      <div class="nav-label">Core</div>
+      <button class="nav-btn active" data-view="chat">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+        <span>Chat Tester</span>
+      </button>
+      <button class="nav-btn" data-view="requests">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+        <span>Request Logs</span>
+      </button>
+      <button class="nav-btn" data-view="models">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+        <span>Models Catalog</span>
+      </button>
+
+      <div class="nav-label">Proxy & Pool</div>
+      <button class="nav-btn" data-view="accounts">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+        <span>Account Pool</span>
+      </button>
+      <button class="nav-btn" data-view="credits">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+        <span>Quota & Credits</span>
+      </button>
+      <button class="nav-btn" data-view="proxies">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+        <span>Egress Proxies</span>
+      </button>
+
+      <div class="nav-label">System</div>
+      <button class="nav-btn" data-view="settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+        <span>Configuration</span>
+      </button>
+
+      <div class="nav-spacer"></div>
     </nav>
+
+    <!-- MAIN VIEWS -->
     <main>
+      <!-- VIEW: CHAT -->
       <section class="view active" id="view-chat">
         <div class="toolbar">
-          <h2>Chat</h2>
-          <select id="model" style="width:240px"></select>
+          <h2>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+            <span>Chat Playground</span>
+          </h2>
+          <div class="toolbar-spacer"></div>
+          <select id="model" style="width:260px;font-weight:600;"></select>
           <span class="pill" id="effortBadge">reasoning default</span>
         </div>
         <div class="msgs" id="msgs"></div>
         <div class="composer">
           <div class="composer-inner">
-            <textarea id="prompt" placeholder="Ketik pesan… Enter kirim, Shift+Enter baris baru"></textarea>
-            <button class="btn" id="btnSend">Kirim</button>
+            <textarea id="prompt" placeholder="Ketik pesan prompt… Tekan Enter untuk kirim, Shift+Enter untuk baris baru"></textarea>
+            <button class="btn" id="btnSend">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+              <span>Kirim</span>
+            </button>
           </div>
         </div>
       </section>
 
+      <!-- VIEW: REQUESTS -->
       <section class="view" id="view-requests">
         <div class="toolbar">
-          <h2>Requests</h2>
-          <span class="pill" id="reqCount">0</span>
-          <button class="btn ghost" id="btnReqRefresh">Refresh</button>
-          <button class="btn ghost" id="btnReqClear">Clear</button>
+          <h2>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+            <span>Request Analytics & Logs</span>
+          </h2>
+          <span class="pill ok" id="reqCount">0</span>
+          <div class="toolbar-spacer"></div>
+          <button class="btn ghost" id="btnReqRefresh">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+            <span>Refresh</span>
+          </button>
+          <button class="btn bad" id="btnReqClear">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+            <span>Bersihkan</span>
+          </button>
         </div>
-        <div id="statsGrid" class="grid2" style="padding:14px 18px 0"></div>
+        <div id="statsGrid" class="grid2"></div>
         <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Waktu</th>
-                <th>Akun</th>
-                <th>Model</th>
-                <th>Reasoning</th>
-                <th>Proxy</th>
-                <th>IP</th>
-                <th>Tokens</th>
-                <th>ms</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody id="reqRows"></tbody>
-          </table>
-          <div class="empty" id="reqEmpty">Belum ada request.</div>
+          <div class="table-card">
+            <table>
+              <thead>
+                <tr>
+                  <th>Waktu</th>
+                  <th>Akun Upstream</th>
+                  <th>Model</th>
+                  <th>Reasoning</th>
+                  <th>Egress Proxy</th>
+                  <th>Client IP</th>
+                  <th>Tokens (in / out)</th>
+                  <th>Latency</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="reqRows"></tbody>
+            </table>
+            <div class="empty" id="reqEmpty">Belum ada request yang tercatat.</div>
+          </div>
         </div>
       </section>
 
+      <!-- VIEW: MODELS -->
       <section class="view" id="view-models">
         <div class="toolbar">
-          <h2>Models</h2>
-          <span class="muted">Reasoning disimpan per model. Chat memakai setting ini.</span>
+          <h2>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+            <span>Available Models & Reasoning Profiles</span>
+          </h2>
+          <span class="muted" style="font-size:12.5px">Setelan reasoning tersimpan otomatis per model untuk panggilan API & Chat.</span>
         </div>
         <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Model</th>
-                <th>Credits</th>
-                <th>Tingkat tersedia</th>
-                <th style="width:180px">Reasoning</th>
-              </tr>
-            </thead>
-            <tbody id="modelRows"></tbody>
-          </table>
+          <div class="table-card">
+            <table>
+              <thead>
+                <tr>
+                  <th>Nama Model / Identifier</th>
+                  <th>Credits Multiplier</th>
+                  <th>Supported Reasoning Efforts</th>
+                  <th style="width:200px">Override Effort</th>
+                </tr>
+              </thead>
+              <tbody id="modelRows"></tbody>
+            </table>
+          </div>
         </div>
       </section>
 
+      <!-- VIEW: PROXIES -->
       <section class="view" id="view-proxies">
         <div class="toolbar">
-          <h2>HTTP proxies</h2>
-          <span class="pill" id="egMeta">0</span>
-          <select id="egMode" style="width:140px">
-            <option value="roundrobin">roundrobin</option>
-            <option value="sticky">sticky</option>
+          <h2>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+            <span>HTTP Egress Proxies</span>
+          </h2>
+          <span class="pill ok" id="egMeta">0 endpoints</span>
+          <div class="toolbar-spacer"></div>
+          <select id="egMode" style="width:150px">
+            <option value="roundrobin">Round-Robin</option>
+            <option value="sticky">Sticky Session</option>
           </select>
-          <button class="btn ghost" id="btnEgCheck">Health check</button>
-          <button class="btn bad" id="btnEgPrune">Hapus yang mati</button>
-          <button class="btn ghost" id="btnEgClear">Hapus semua</button>
+          <button class="btn ghost" id="btnEgCheck">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+            <span>Health Check</span>
+          </button>
+          <button class="btn bad" id="btnEgPrune">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+            <span>Hapus Yang Mati</span>
+          </button>
+          <button class="btn ghost" id="btnEgClear">Hapus Semua</button>
         </div>
         <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th style="width:36px"><input type="checkbox" id="egSelAll" /></th>
-                <th>Host</th>
-                <th>Port</th>
-                <th>User</th>
-                <th>Status</th>
-                <th style="width:90px"></th>
-              </tr>
-            </thead>
-            <tbody id="egRows"></tbody>
-          </table>
-          <div class="empty" id="egEmpty">Belum ada proxy. Tempel list di bawah.</div>
+          <div class="table-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:40px"><input type="checkbox" id="egSelAll" /></th>
+                  <th>IP / Host</th>
+                  <th>Port</th>
+                  <th>Auth Username</th>
+                  <th>Health Status</th>
+                  <th style="width:90px">Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="egRows"></tbody>
+            </table>
+            <div class="empty" id="egEmpty">Belum ada proxy egress. Tambahkan list proxy di bawah ini.</div>
+          </div>
         </div>
         <div class="add-box">
-          <div class="row" style="display:flex;gap:8px;align-items:flex-start">
-            <textarea id="egLines" placeholder="host:port:user:pass — satu per baris. Password tidak ditampilkan di tabel."></textarea>
-            <div style="display:flex;flex-direction:column;gap:8px;min-width:140px">
-              <button class="btn" id="btnEgAdd">Tambah</button>
-              <button class="btn ghost" id="btnEgDelSel">Hapus terpilih</button>
+          <div class="add-card">
+            <div style="display:flex;gap:12px;align-items:flex-start">
+              <textarea id="egLines" placeholder="Format: host:port:username:password (satu per baris). Password akan dienkripsi dan tidak ditampilkan di tabel."></textarea>
+              <div style="display:flex;flex-direction:column;gap:8px;min-width:160px">
+                <button class="btn" id="btnEgAdd">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                  <span>Tambah Proxy</span>
+                </button>
+                <button class="btn ghost" id="btnEgDelSel">Hapus Terpilih</button>
+              </div>
             </div>
+            <div class="hint" id="egHint" style="margin-top:10px">Egress proxy digunakan secara round-robin untuk menghindari IP rate-limit upstream.</div>
           </div>
-          <div class="hint" id="egHint">Round-robin saat ON. Mati? Health check lalu hapus yang mati.</div>
         </div>
       </section>
 
+      <!-- VIEW: ACCOUNTS -->
       <section class="view" id="view-accounts">
         <div class="toolbar">
-          <h2>Accounts</h2>
-          <span class="pill" id="accRr">1 akun</span>
-          <button class="btn" id="btnLogin">Login browser</button>
-          <button class="btn ghost" id="btnImport">Import desktop</button>
+          <h2>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+            <span>Tencent Cloud WorkBuddy Accounts</span>
+          </h2>
+          <span class="pill ok" id="accRr">0 akun</span>
+          <div class="toolbar-spacer"></div>
+          <button class="btn" id="btnLogin">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
+            <span>Login Akun Baru</span>
+          </button>
+          <button class="btn ghost" id="btnImport">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            <span>Import Desktop</span>
+          </button>
         </div>
         <div class="table-wrap">
-          <table>
-            <thead><tr><th>Email</th><th>UID</th><th>Req</th><th>Tokens</th><th>Status</th></tr></thead>
-            <tbody id="accRows"></tbody>
-          </table>
-          <div class="hint" id="loginHint" style="padding:12px 0"></div>
+          <div class="table-card">
+            <table>
+              <thead>
+                <tr>
+                  <th>Email Akun</th>
+                  <th>UID ID</th>
+                  <th>Total Requests</th>
+                  <th>Tokens (in / out)</th>
+                  <th>Status Pool</th>
+                </tr>
+              </thead>
+              <tbody id="accRows"></tbody>
+            </table>
+            <div class="hint" id="loginHint" style="padding:14px"></div>
+          </div>
         </div>
       </section>
 
+      <!-- VIEW: CREDITS -->
       <section class="view" id="view-credits">
         <div class="toolbar">
-          <h2>Credits</h2>
-          <button class="btn ghost" id="btnCredRefresh">Refresh</button>
-          <button class="btn ghost" id="btnCredForce">Force</button>
-          <span class="muted" id="credMeta"></span>
+          <h2>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+            <span>Credit Balance & Package Quota</span>
+          </h2>
+          <button class="btn ghost" id="btnCredRefresh">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+            <span>Refresh</span>
+          </button>
+          <button class="btn ghost" id="btnCredForce">Sync Real-time</button>
+          <span class="muted" id="credMeta" style="font-size:12px;margin-left:8px"></span>
           <div id="credKpis">
-            <span class="kpi">Sisa<b id="kpiLeft">—</b></span>
-            <span class="kpi">Terpakai<b id="kpiUsed">—</b></span>
-            <span class="kpi">Total<b id="kpiTotal">—</b></span>
+            <span class="kpi">Sisa Quota: <b id="kpiLeft" class="ok">—</b></span>
+            <span class="kpi">Terpakai: <b id="kpiUsed">—</b></span>
+            <span class="kpi">Total Quota: <b id="kpiTotal">—</b></span>
           </div>
         </div>
         <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th style="width:190px">Akun</th>
-                <th>Paket</th>
-                <th style="width:120px">Sisa</th>
-                <th style="width:80px">Terpakai</th>
-                <th style="width:70px">Total</th>
-                <th style="width:150px">Reset / Expire</th>
-              </tr>
-            </thead>
-            <tbody id="credRows"></tbody>
-          </table>
-          <div class="empty" id="credEmpty">Belum ada data credit.</div>
+          <div class="table-card">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:200px">Akun WorkBuddy</th>
+                  <th>Nama Paket Upstream</th>
+                  <th style="width:140px">Sisa Quota</th>
+                  <th style="width:90px">Terpakai</th>
+                  <th style="width:90px">Total Quota</th>
+                  <th style="width:170px">Reset / Kadaluwarsa</th>
+                </tr>
+              </thead>
+              <tbody id="credRows"></tbody>
+            </table>
+            <div class="empty" id="credEmpty">Belum ada data kuota yang tersinkronisasi.</div>
+          </div>
         </div>
       </section>
 
+      <!-- VIEW: SETTINGS -->
       <section class="view" id="view-settings">
-        <div class="toolbar"><h2>Settings</h2></div>
+        <div class="toolbar">
+          <h2>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            <span>Gateway & OpenAI Client Configuration</span>
+          </h2>
+        </div>
         <div class="grid2">
           <div class="card">
-            <h3>OpenAI endpoint</h3>
-            <div class="kv">Base URL<b class="mono" id="baseUrl">http://127.0.0.1:8790/v1</b></div>
-            <div class="kv">API key<b class="mono" id="apiKey">sk-wb-local-change-me</b></div>
+            <h3>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+              <span>Integrasi OpenAI Client</span>
+            </h3>
+            <div class="kv">
+              OpenAI Base URL
+              <b class="mono" id="baseUrl">http://43.134.237.52:8790/v1</b>
+            </div>
+            <div class="kv">
+              Proxy API Key
+              <b class="mono" id="apiKey"></b>
+            </div>
+            <div style="display:flex;gap:10px;margin-top:16px">
+              <button class="btn ghost" type="button" id="btnCopyBase">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                <span>Salin Base URL</span>
+              </button>
+              <button class="btn" type="button" id="btnCopyKey">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                <span>Salin API Key</span>
+              </button>
+            </div>
+            <div class="hint" id="copyHint" style="margin-top:14px">
+              Gunakan header <code>Authorization: Bearer &lt;api_key&gt;</code> pada klien seperti NextChat, Chatbox, LibreChat, atau Cursor.
+            </div>
           </div>
+
           <div class="card">
-            <h3>Upstream</h3>
-            <div class="kv">Versi aplikasi<b class="mono" id="verText">—</b></div>
-            <div class="kv">WorkBuddy chat<b>POST /v2/chat/completions</b></div>
-            <div class="kv">Reasoning field<b>reasoning_effort</b></div>
-            <div class="kv">Account rotation<b>otomatis jika &gt; 1 akun</b></div>
+            <h3>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+              <span>Status Arsitektur Upstream</span>
+            </h3>
+            <div class="kv">Versi Core Proxy: <b class="mono" id="verText">—</b></div>
+            <div class="kv">WorkBuddy Chat API: <b>POST /v2/chat/completions (Tencent Cloud)</b></div>
+            <div class="kv">Format Reasoning Effort: <b>reasoning_effort (low / medium / high / max)</b></div>
+            <div class="kv">Rotasi Akun: <b>Otomatis Round-Robin saat jumlah akun &gt; 1</b></div>
+            <div class="kv">Egress Multi-IP: <b>Round-Robin proxy untuk mencegah rate limit</b></div>
           </div>
         </div>
       </section>
     </main>
   </div>
+
+  <!-- TOAST NOTIFICATION -->
+  <div id="toast">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+    <span id="toastMsg">Tersalin ke clipboard</span>
+  </div>
+
   <script>
     const $ = (id) => document.getElementById(id);
-    let proxyKey = "sk-wb-local-change-me";
+    let proxyKey = "«redacted:sk-…»";
     let loginTimer = null;
     let modelsMeta = [];
     let egHealth = {};
     let lastEgress = { items: [], enabled: false, mode: "roundrobin", count: 0 };
     let lastModelSig = "";
     const PREF_MODEL = "wb.model";
+
+    function showToast(msg) {
+      const toast = $("toast");
+      const text = $("toastMsg");
+      if (toast && text) {
+        text.textContent = msg;
+        toast.style.display = "flex";
+        setTimeout(() => { toast.style.display = "none"; }, 2500);
+      }
+    }
 
     function savedEffort(modelId) {
       const m = modelsMeta.find((x) => x.id === modelId);
@@ -345,7 +1155,7 @@
       const pick = (stored && efforts.indexOf(stored) >= 0) ? stored : "";
       const badge = $("effortBadge");
       if (badge) {
-        badge.textContent = pick ? ("reasoning " + pick) : ("reasoning " + def);
+        badge.textContent = pick ? ("effort: " + pick) : ("effort: " + def);
         badge.className = "pill" + (pick ? " ok" : "");
       }
     }
@@ -366,12 +1176,13 @@
         const cur = m.selected_effort || "";
         const opts = ['<option value="">default' + (def ? " (" + def + ")" : "") + "</option>"]
           .concat(efforts.map((e) => '<option value="' + e + '"' + (e === cur ? " selected" : "") + ">" + e + "</option>"));
-        const avail = efforts.length ? efforts.join(" / ") : "fixed";
-        return "<tr><td><b>" + (m.name || m.id) + "</b><div class='muted mono'>" + m.id + "</div></td>" +
-          "<td class='muted'>" + (m.credits || "—") + "</td>" +
-          "<td class='muted'>" + avail + "</td>" +
+        const avail = efforts.length ? efforts.map(e => '<span class="pill" style="margin-right:4px">' + e + '</span>').join("") : '<span class="muted">fixed</span>';
+        return "<tr>" +
+          "<td><b style='color:#ffffff'>" + (m.name || m.id) + "</b><div class='muted mono' style='font-size:11px;margin-top:2px'>" + m.id + "</div></td>" +
+          "<td><span class='pill'>" + (m.credits || "1x") + "</span></td>" +
+          "<td>" + avail + "</td>" +
           "<td>" + (efforts.length
-            ? '<select class="effort-sel" data-id="' + m.id + '">' + opts.join("") + "</select>"
+            ? '<select class="effort-sel" data-id="' + m.id + '" style="width:100%">' + opts.join("") + "</select>"
             : '<span class="muted">—</span>') + "</td></tr>";
       }).join("");
       box.querySelectorAll(".effort-sel").forEach((sel) => {
@@ -382,6 +1193,7 @@
             fillEffort($("model").value);
             lastModelSig = modelsMeta.map((m) => m.id + ":" + (m.selected_effort || "")).join(",");
             renderModels();
+            showToast("Effort model " + sel.dataset.id + " disimpan");
           }
         };
       });
@@ -390,7 +1202,8 @@
     function addMsg(role, text) {
       const el = document.createElement("div");
       el.className = "msg " + role;
-      el.innerHTML = '<div class="who">' + role + '</div><div class="body"></div>';
+      const roleLabel = role === "user" ? "Anda" : "Assistant (WorkBuddy)";
+      el.innerHTML = '<div class="who">' + roleLabel + '</div><div class="body"></div>';
       el.querySelector(".body").textContent = text;
       $("msgs").appendChild(el);
       $("msgs").scrollTop = $("msgs").scrollHeight;
@@ -400,12 +1213,18 @@
     async function jget(url) {
       const r = await fetch(url);
       const t = await r.text();
-      try { return JSON.parse(t); } catch { return { error: t, status: r.status }; }
+      let j;
+      try { j = JSON.parse(t); } catch { j = { error: t }; }
+      j.status = r.status;
+      return j;
     }
     async function jpost(url, body) {
       const r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body || {}) });
       const t = await r.text();
-      try { return JSON.parse(t); } catch { return { error: t, status: r.status }; }
+      let j;
+      try { j = JSON.parse(t); } catch { j = { error: t }; }
+      j.status = r.status;
+      return j;
     }
 
     function renderProxies(eg) {
@@ -416,21 +1235,21 @@
         const h = egHealth[it.label];
         let st = '<span class="pill">unknown</span>';
         if (h) st = h.ok
-          ? '<span class="pill ok">' + (h.ip || "alive") + "</span>"
-          : '<span class="pill bad">dead</span>';
+          ? '<span class="pill ok">' + (h.ip || "online") + "</span>"
+          : '<span class="pill bad">unreachable</span>';
         return '<tr data-label="' + it.label.replace(/"/g, "") + '">' +
           '<td><input type="checkbox" class="eg-cb" /></td>' +
-          '<td class="mono">' + it.host + "</td>" +
-          "<td>" + it.port + "</td>" +
+          '<td class="mono" style="color:#ffffff">' + it.host + "</td>" +
+          '<td class="mono">' + it.port + "</td>" +
           '<td class="muted">' + (it.user || "—") + "</td>" +
           "<td>" + st + "</td>" +
-          '<td><button class="icon-btn bad eg-del">hapus</button></td></tr>';
+          '<td><button class="icon-btn bad eg-del" title="Hapus proxy ini">hapus</button></td></tr>';
       }).join("");
       $("egRows").querySelectorAll(".eg-del").forEach((btn) => {
         btn.onclick = async () => {
           const label = btn.closest("tr").dataset.label;
           const out = await jpost("/admin/egress/remove", { label: label });
-          if (out.ok) { delete egHealth[label]; applyEgress(out.egress); }
+          if (out.ok) { delete egHealth[label]; applyEgress(out.egress); showToast("Proxy dihapus"); }
         };
       });
     }
@@ -457,25 +1276,25 @@
     }
     function renderRequests(list) {
       list = list || [];
-      $("reqCount").textContent = list.length;
+      $("reqCount").textContent = list.length + " logged";
       $("reqEmpty").style.display = list.length ? "none" : "block";
       $("reqRows").innerHTML = list.map((r) => {
         const tok = r.tokens || {};
         const st = r.ok
-          ? '<span class="pill ok">' + (r.status || 200) + "</span>"
+          ? '<span class="pill ok">' + (r.status || 200) + " OK</span>"
           : '<span class="pill bad">' + (r.status || "err") + "</span>";
         const tokens = (tok.prompt || 0) + " / " + (tok.completion || 0) +
           (tok.reasoning ? " · r" + tok.reasoning : "");
         return "<tr>" +
-          "<td class='muted'>" + fmtTime(r.ts) + "</td>" +
-          "<td>" + (r.account || "—") + "</td>" +
+          "<td class='muted mono' style='font-size:11.5px'>" + fmtTime(r.ts) + "</td>" +
+          "<td><span style='color:#ffffff;font-weight:550'>" + (r.account || "—") + "</span></td>" +
           "<td class='mono'>" + (r.model || "—") + "</td>" +
-          "<td class='muted'>" + (r.effort || "default") + "</td>" +
-          "<td class='mono muted'>" + shortProxy(r.proxy) + "</td>" +
-          "<td class='mono'>" + (r.ip || "—") + "</td>" +
-          "<td>" + tokens + "</td>" +
-          "<td class='muted'>" + (r.ms || 0) + "</td>" +
-          "<td>" + st + (r.error ? "<div class='err'>" + r.error.slice(0, 80) + "</div>" : "") + "</td></tr>";
+          "<td><span class='pill'>" + (r.effort || "default") + "</span></td>" +
+          "<td class='mono muted' style='font-size:11px'>" + shortProxy(r.proxy) + "</td>" +
+          "<td class='mono' style='font-size:11px'>" + (r.ip || "—") + "</td>" +
+          "<td class='mono'>" + tokens + "</td>" +
+          "<td class='muted mono'>" + (r.ms ? (r.ms + "ms") : "—") + "</td>" +
+          "<td>" + st + (r.error ? "<div class='err' style='font-size:11px;margin-top:2px'>" + r.error.slice(0, 80) + "</div>" : "") + "</td></tr>";
       }).join("");
     }
 
@@ -497,7 +1316,7 @@
     }
     function pbar(left, total) {
       const pct = pctOf(left, total);
-      const col = pct > 40 ? "var(--acc)" : pct > 15 ? "var(--warn)" : "var(--bad)";
+      const col = pct > 40 ? "#10b981" : pct > 15 ? "#f59e0b" : "#ef4444";
       return '<div class="pbar"><i style="width:' + pct.toFixed(1) + "%;background:" + col + '"></i></div>';
     }
     function setKpi(id, text, tone) {
@@ -516,7 +1335,7 @@
         const acct = esc(a.account || "—");
         if (!a.ok) {
           rows.push('<tr class="grp-first"><td class="pkg">' + acct + "</td>" +
-            '<td colspan="5"><span class="err">' + esc(a.error || "gagal") + "</span></td></tr>");
+            '<td colspan="5"><span class="err">' + esc(a.error || "Gagal sinkron") + "</span></td></tr>");
           return;
         }
         okCount++;
@@ -526,22 +1345,22 @@
         const res = a.resources || [];
         if (!res.length) {
           rows.push('<tr class="grp-first"><td class="pkg">' + acct + "</td>" +
-            '<td class="muted" colspan="5">tidak ada paket aktif</td></tr>');
+            '<td class="muted" colspan="5">Tidak ada paket aktif</td></tr>');
           return;
         }
         res.forEach((r, i) => {
           const when = r.isDaily ? r.refreshAt : r.expireAt;
           const pct = pctOf(r.left, r.total);
-          rows.push('<tr class="' + (i === 0 ? "grp-first" : "grp") + '">' +
-            "<td>" + (i === 0 ? '<span class="pkg">' + acct + "</span>" : "") + "</td>" +
+          rows.push('<tr>' +
+            "<td>" + (i === 0 ? '<div style="font-weight:600;color:#ffffff">' + acct + '</div>' : '') + "</td>" +
             '<td><span class="pkg">' + esc(r.name) + "</span>" +
               (r.isDaily ? '<span class="lbl-daily">harian</span>' : "") +
               '<div class="pkgcode">' + esc(r.packageCode) + "</div></td>" +
-            '<td class="num-cell"><b class="' + toneOf(pct) + '">' + fmtNum(r.left) + "</b>" +
+            '<td class="num-cell"><b class="' + toneOf(pct) + '" style="font-size:13px">' + fmtNum(r.left) + "</b>" +
               '<span class="muted"> ' + esc(r.unit) + "</span>" + pbar(r.left, r.total) + "</td>" +
             '<td class="num-cell muted">' + fmtNum(r.used) + "</td>" +
             '<td class="num-cell muted">' + fmtNum(r.total) + "</td>" +
-            '<td class="muted">' + fmtDate(when) + "</td></tr>");
+            '<td class="muted" style="font-size:12px">' + fmtDate(when) + "</td></tr>");
         });
       });
 
@@ -553,17 +1372,18 @@
       setKpi("kpiUsed", fmtNum(gUsed), "");
       setKpi("kpiTotal", fmtNum(gTotal), "");
       $("credMeta").textContent = data && data.fetchedAt
-        ? okCount + "/" + list.length + " akun · " + new Date(data.fetchedAt).toLocaleTimeString()
+        ? okCount + "/" + list.length + " akun · Sinkron: " + new Date(data.fetchedAt).toLocaleTimeString()
         : "";
     }
     async function loadCredits(force) {
-      $("credMeta").textContent = "memuat…";
+      $("credMeta").textContent = "Menyinkronkan upstream…";
       const out = await jget("/admin/credits" + (force ? "?force=1" : ""));
       if (out.error && !out.accounts) {
         $("credMeta").innerHTML = '<span class="err">' + esc0(out.error) + "</span>";
         return;
       }
       renderCredits(out);
+      showToast("Data kuota diperbarui");
     }
     function esc0(s) {
       return String(s == null ? "" : s).slice(0, 120).replace(/[<>&]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]));
@@ -573,53 +1393,58 @@
       const box = $("statsGrid");
       if (!box || !stats) return;
       const blocks = [
-        ["24 jam", stats.h24],
-        ["3 hari", stats.d3],
-        ["7 hari", stats.d7],
-        ["30 hari", stats.d30],
+        ["24 Jam Terakhir", stats.h24],
+        ["3 Hari Terakhir", stats.d3],
+        ["7 Hari Terakhir", stats.d7],
+        ["30 Hari Terakhir", stats.d30],
       ];
       box.innerHTML = blocks.map(([title, w]) => {
         w = w || { requests: 0, tokens: 0, prompt: 0, completion: 0, reasoning: 0, models: [] };
         const models = (w.models || []).map((m) =>
-          "<div class='muted'>" + m.id + " · " + m.requests + " req · " + m.tokens + " tok" +
+          "<div class='muted' style='font-size:12px;margin-top:2px'>" + m.id + " · <b style='color:#ffffff'>" + m.requests + " req</b> · " + m.tokens + " tok" +
           (m.reasoning ? " · r" + m.reasoning : "") + "</div>"
-        ).join("") || "<div class='muted'>—</div>";
-        return "<div class='card'><h3>" + title + "</h3>" +
-          "<div class='kv'>Requests<b>" + (w.requests || 0) + "</b></div>" +
-          "<div class='kv'>Tokens<b>" + (w.tokens || 0) + "</b><span class='muted'> in " + (w.prompt || 0) + " / out " + (w.completion || 0) +
-          (w.reasoning ? " · reason " + w.reasoning : "") + "</span></div>" +
-          "<div class='kv'>Models</div>" + models + "</div>";
+        ).join("") || "<div class='muted' style='font-size:12px'>Tidak ada aktivitas</div>";
+        return "<div class='card'>" +
+          "<h3><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><rect x='2' y='3' width='20' height='14' rx='2'></rect></svg><span>" + title + "</span></h3>" +
+          "<div class='kv'>Total Requests: <b style='font-size:18px;color:#ffffff'>" + (w.requests || 0) + "</b></div>" +
+          "<div class='kv'>Total Tokens: <b style='font-size:14px;color:#ffffff'>" + (w.tokens || 0) + "</b><span class='muted' style='display:block;margin-top:2px'> (Prompt: " + (w.prompt || 0) + " · Comp: " + (w.completion || 0) + (w.reasoning ? " · Reason: " + w.reasoning : "") + ")</span></div>" +
+          "<div class='kv' style='margin-bottom:4px;font-weight:600;color:var(--text-dim)'>Aktivitas Per Model:</div>" + models + "</div>";
       }).join("");
     }
 
     async function refreshState() {
       const s = await jget("/admin/state");
+      if (s.status === 401) { location.href = "/login"; return; }
       if (!s.ok) { $("statusPill").textContent = "admin error"; $("statusPill").className = "pill bad"; return; }
-      proxyKey = s.proxy_key || proxyKey;
+      proxyKey = s.api_key || s.proxy_key || proxyKey;
       $("apiKey").textContent = proxyKey;
-      $("baseUrl").textContent = s.base_url || "http://127.0.0.1:8790/v1";
+      $("baseUrl").textContent = s.base_url || "http://43.134.237.52:8790/v1";
+      if ($("hdrMeta")) $("hdrMeta").textContent = (s.host || "43.134.237.52") + ":" + (s.port || 8790);
       if (s.version) {
         $("verPill").textContent = "v" + s.version;
         $("verPill").title = "workbuddy-proxy v" + s.version;
         $("verText").textContent = "v" + s.version;
       }
       const n = (s.accounts || []).filter((a) => !a.disabled).length;
-      $("statusPill").textContent = n ? n + " akun" + (s.account_rr ? " · RR" : "") : "belum login";
+      $("statusPill").textContent = n ? n + " akun aktif" + (s.account_rr ? " · RR" : "") : "belum login";
       $("statusPill").className = "pill" + (n ? " ok" : " warn");
-      $("accRr").textContent = s.account_rr ? "roundrobin ON" : "single account";
+      $("accRr").textContent = s.account_rr ? n + " akun · roundrobin ON" : n + " akun · single mode";
       $("accRr").className = "pill" + (s.account_rr ? " ok" : "");
       applyEgress(s.egress);
       renderRequests(s.requests || []);
       renderStats(s.stats);
       $("accRows").innerHTML = (s.accounts || []).map((a) =>
-        "<tr><td>" + (a.email || "—") + "</td><td class='mono muted'>" + (a.uid || "").slice(0, 8) + "</td>" +
-        "<td>" + (a.requests || 0) + "</td><td>" + (a.tokens_in || 0) + " / " + (a.tokens_out || 0) + "</td>" +
-        "<td><span class='pill " + (a.disabled ? "bad" : "ok") + "'>" + (a.disabled ? "disabled" : "ready") + "</span></td></tr>"
+        "<tr>" +
+        "<td><div style='font-weight:600;color:#ffffff'>" + (a.email || "—") + "</div></td>" +
+        "<td class='mono muted'>" + (a.uid || "").slice(0, 12) + "…</td>" +
+        "<td><b style='color:#ffffff'>" + (a.requests || 0) + "</b></td>" +
+        "<td class='mono'>" + (a.tokens_in || 0) + " in / " + (a.tokens_out || 0) + " out</td>" +
+        "<td><span class='pill " + (a.disabled ? "bad" : "ok") + "'>" + (a.disabled ? "dinonaktifkan" : "ready") + "</span></td></tr>"
       ).join("");
       const sel = $("model");
       const cur = sel.value || localStorage.getItem(PREF_MODEL) || "";
       modelsMeta = s.models || [];
-      sel.innerHTML = modelsMeta.map((m) => '<option value="' + m.id + '">' + (m.name || m.id) + (m.credits ? " · " + m.credits : "") + "</option>").join("");
+      sel.innerHTML = modelsMeta.map((m) => '<option value="' + m.id + '">' + (m.name || m.id) + (m.credits ? " (" + m.credits + ")" : "") + "</option>").join("");
       if (cur) sel.value = cur;
       if (!sel.value && modelsMeta[0]) sel.value = modelsMeta[0].id;
       if (sel.value) localStorage.setItem(PREF_MODEL, sel.value);
@@ -633,70 +1458,91 @@
 
     $("egSwitch").onchange = async () => {
       const out = await jpost("/admin/egress", { enabled: $("egSwitch").checked });
-      if (out.ok) applyEgress(out.egress);
+      if (out.ok) {
+        applyEgress(out.egress);
+        showToast(out.egress.enabled ? "Egress diaktifkan" : "Egress dinonaktifkan");
+      }
     };
     $("egMode").onchange = async () => {
       const out = await jpost("/admin/egress", { mode: $("egMode").value });
-      if (out.ok) applyEgress(out.egress);
+      if (out.ok) {
+        applyEgress(out.egress);
+        showToast("Mode egress: " + $("egMode").value);
+      }
     };
     $("btnEgAdd").onclick = async () => {
       const lines = $("egLines").value.split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
-      if (!lines.length) { $("egHint").innerHTML = '<span class="err">kosong</span>'; return; }
+      if (!lines.length) { $("egHint").innerHTML = '<span class="err">Input list kosong</span>'; return; }
       const out = await jpost("/admin/egress/add", { lines: lines });
-      if (out.ok) { $("egLines").value = ""; $("egHint").innerHTML = '<span class="ok">+' + lines.length + " · total " + out.egress.count + "</span>"; applyEgress(out.egress); }
-      else $("egHint").innerHTML = '<span class="err">' + (out.error || "gagal") + "</span>";
+      if (out.ok) {
+        $("egLines").value = "";
+        $("egHint").innerHTML = '<span class="ok">+' + lines.length + " proxy ditambahkan (total " + out.egress.count + ")</span>";
+        applyEgress(out.egress);
+        showToast("+" + lines.length + " proxy berhasil ditambahkan");
+      } else {
+        $("egHint").innerHTML = '<span class="err">' + (out.error || "Gagal menambah") + "</span>";
+      }
     };
     $("btnEgDelSel").onclick = async () => {
       const labels = [...$("egRows").querySelectorAll("tr")].filter((tr) => tr.querySelector(".eg-cb").checked).map((tr) => tr.dataset.label);
-      if (!labels.length) return;
+      if (!labels.length) { showToast("Pilih proxy terlebih dahulu"); return; }
       const out = await jpost("/admin/egress/remove", { labels: labels });
-      if (out.ok) { labels.forEach((l) => delete egHealth[l]); applyEgress(out.egress); $("egHint").innerHTML = '<span class="ok">hapus ' + labels.length + "</span>"; }
+      if (out.ok) {
+        labels.forEach((l) => delete egHealth[l]);
+        applyEgress(out.egress);
+        $("egHint").innerHTML = '<span class="ok">Berhasil menghapus ' + labels.length + ' proxy</span>';
+        showToast("Dihapus " + labels.length + " proxy");
+      }
     };
     $("egSelAll").onchange = () => {
       $("egRows").querySelectorAll(".eg-cb").forEach((cb) => { cb.checked = $("egSelAll").checked; });
     };
     $("btnEgClear").onclick = async () => {
-      if (!confirm("Hapus semua proxy?")) return;
+      if (!confirm("Hapus semua konfigurasi proxy egress?")) return;
       const out = await jpost("/admin/egress", { list: [] });
-      if (out.ok) { egHealth = {}; applyEgress(out.egress); }
+      if (out.ok) { egHealth = {}; applyEgress(out.egress); showToast("Semua proxy dibersihkan"); }
     };
-    $("btnReqRefresh").onclick = () => refreshState();
+    $("btnReqRefresh").onclick = () => { refreshState(); showToast("Logs diperbarui"); };
     $("btnReqClear").onclick = async () => {
       await fetch("/admin/requests", { method: "DELETE" });
       renderRequests([]);
+      showToast("Log request dibersihkan");
     };
     $("btnEgCheck").onclick = async () => {
-      $("egHint").textContent = "checking…";
+      $("egHint").textContent = "Melakukan health-check semua proxy…";
       const out = await jpost("/admin/egress/check");
-      if (!out.ok) { $("egHint").innerHTML = '<span class="err">check gagal</span>'; return; }
+      if (!out.ok) { $("egHint").innerHTML = '<span class="err">Pemeriksaan gagal</span>'; return; }
       egHealth = {};
       let alive = 0, dead = 0;
       (out.results || []).forEach((r) => { egHealth[r.label] = r; if (r.ok) alive++; else dead++; });
       applyEgress(out.egress || lastEgress);
-      $("egHint").innerHTML = '<span class="ok">' + alive + " alive</span> · <span class=\"err\">" + dead + " dead</span>";
+      $("egHint").innerHTML = '<span class="ok">' + alive + " online</span> · <span class=\"err\">" + dead + " mati</span>";
+      showToast(alive + " online, " + dead + " mati");
     };
     $("btnEgPrune").onclick = async () => {
-      $("egHint").textContent = "prune…";
+      $("egHint").textContent = "Membersihkan proxy yang tidak aktif…";
       const out = await jpost("/admin/egress/prune");
-      if (!out.ok) { $("egHint").innerHTML = '<span class="err">prune gagal</span>'; return; }
+      if (!out.ok) { $("egHint").innerHTML = '<span class="err">Prune gagal</span>'; return; }
       egHealth = {};
       (out.results || []).forEach((r) => { if (r.ok) egHealth[r.label] = r; });
       applyEgress(out.egress);
-      $("egHint").innerHTML = '<span class="ok">kept ' + out.kept + "</span> · hapus " + out.removed + " mati";
+      $("egHint").innerHTML = '<span class="ok">Mempertahankan ' + out.kept + "</span> · Menghapus " + out.removed + " proxy mati";
+      showToast("Dihapus " + out.removed + " proxy mati");
     };
 
     $("btnLogin").onclick = async () => {
-      $("loginHint").textContent = "membuka login…";
+      $("loginHint").textContent = "Menyiapkan sesi otentikasi…";
       const out = await jpost("/admin/login/start");
-      if (!out.state) { $("loginHint").innerHTML = '<span class="err">' + (out.error || "gagal") + "</span>"; return; }
+      if (!out.state) { $("loginHint").innerHTML = '<span class="err">' + (out.error || "Gagal memulai") + "</span>"; return; }
       window.open(out.authUrl, "_blank");
-      $("loginHint").textContent = "selesaikan login di browser…";
+      $("loginHint").textContent = "Silakan selesaikan login WorkBuddy di tab baru yang terbuka…";
       if (loginTimer) clearInterval(loginTimer);
       loginTimer = setInterval(async () => {
         const p = await jget("/admin/login/poll?state=" + encodeURIComponent(out.state));
         if (p.status === "ok") {
           clearInterval(loginTimer);
-          $("loginHint").innerHTML = '<span class="ok">login ok: ' + (p.account && (p.account.email || p.account.uid)) + "</span>";
+          $("loginHint").innerHTML = '<span class="ok">Berhasil login akun: ' + (p.account && (p.account.email || p.account.uid)) + "</span>";
+          showToast("Akun baru berhasil ditambahkan ke pool");
           refreshState();
         } else if (p.error) $("loginHint").innerHTML = '<span class="err">' + p.error + "</span>";
       }, 2000);
@@ -704,9 +1550,10 @@
     $("btnImport").onclick = async () => {
       const out = await jpost("/admin/import");
       $("loginHint").innerHTML = out.ok
-        ? '<span class="ok">import: ' + (out.account && (out.account.email || out.account.uid)) + "</span>"
-        : '<span class="err">tidak ada sesi desktop</span>';
+        ? '<span class="ok">Import berhasil: ' + (out.account && (out.account.email || out.account.uid)) + "</span>"
+        : '<span class="err">Tidak ditemukan sesi desktop WorkBuddy</span>';
       refreshState();
+      showToast(out.ok ? "Import akun berhasil" : "Import gagal");
     };
 
     async function send() {
@@ -714,7 +1561,7 @@
       if (!text) return;
       $("prompt").value = "";
       addMsg("user", text);
-      const bodyEl = addMsg("assistant", "…");
+      const bodyEl = addMsg("assistant", "Menghubungi AI…");
       const r = await fetch("/v1/chat/completions", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: "Bearer " + proxyKey },
@@ -749,7 +1596,7 @@
         }
         $("msgs").scrollTop = $("msgs").scrollHeight;
       }
-      if (!acc) bodyEl.textContent = "(kosong)";
+      if (!acc) bodyEl.textContent = "(Tidak ada respon)";
     }
 
     $("btnSend").onclick = send;
@@ -763,6 +1610,25 @@
 
     $("btnCredRefresh").onclick = () => loadCredits(false);
     $("btnCredForce").onclick = () => loadCredits(true);
+
+    function copyText(text, label) {
+      const done = () => { showToast("Salin " + label + " berhasil"); };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(() => { showToast("Gagal menyalin"); });
+      } else {
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        ta.remove();
+        done();
+      }
+    }
+    const btnCopyBase = $("btnCopyBase");
+    const btnCopyKey = $("btnCopyKey");
+    if (btnCopyBase) btnCopyBase.onclick = () => copyText($("baseUrl").textContent, "Base URL");
+    if (btnCopyKey) btnCopyKey.onclick = () => copyText($("apiKey").textContent, "API Key");
 
     refreshState();
     setInterval(refreshState, 30000);

@@ -4,5 +4,6 @@ accounts.json
 proxies.txt
 requests.jsonl
 *.tmp
+*.bak
 .DS_Store
 Thumbs.db
