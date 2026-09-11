@@ -343,6 +343,28 @@
       background: rgba(255, 255, 255, 0.03);
       padding: 3px 8px;
     }
+    .pulse-dot {
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+      animation: pulse 2s infinite;
+      margin-right: 3px;
+      vertical-align: middle;
+      flex-shrink: 0;
+    }
+    .pulse-dot.bad {
+      background: #ef4444;
+      box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+      animation: none;
+    }
+    @keyframes pulse {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+      70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
 
     /* --- SWITCH TOGGLE --- */
     .switch-wrap {
@@ -819,6 +841,144 @@
       padding: 16px;
     }
 
+    /* --- SEARCH INPUTS & ACTION BUTTONS --- */
+    .search-input {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 12px;
+      color: #ffffff;
+      width: 170px;
+      transition: all 0.15s ease;
+    }
+    .search-input:focus {
+      border-color: var(--accent);
+      background: rgba(255, 255, 255, 0.07);
+      box-shadow: 0 0 0 2px var(--accent-glow);
+    }
+    .search-input::placeholder {
+      color: var(--text-dim);
+    }
+
+    .action-cell {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-xs {
+      padding: 3px 8px;
+      font-size: 11px;
+      border-radius: 6px;
+      gap: 4px;
+    }
+
+    /* --- CHAT EMPTY STATE --- */
+    .chat-empty {
+      max-width: 540px;
+      margin: auto;
+      text-align: center;
+      padding: 48px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    .chat-empty-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      background: rgba(99, 102, 241, 0.12);
+      border: 1px solid rgba(99, 102, 241, 0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #818cf8;
+      box-shadow: 0 8px 24px -6px rgba(99, 102, 241, 0.25);
+      margin-bottom: 4px;
+    }
+    .chat-empty h3 {
+      font-size: 16px;
+      font-weight: 700;
+      color: #ffffff;
+    }
+    .chat-empty p {
+      font-size: 12.5px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .chat-chips {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 6px;
+    }
+    .chip-btn {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 6px 14px;
+      font-size: 12px;
+      color: var(--text);
+      transition: all 0.15s ease;
+      cursor: pointer;
+    }
+    .chip-btn:hover {
+      background: rgba(99, 102, 241, 0.15);
+      border-color: rgba(99, 102, 241, 0.4);
+      color: #ffffff;
+      transform: translateY(-1px);
+    }
+
+    /* --- CODE SNIPPETS (SETTINGS) --- */
+    .code-tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 10px;
+      align-items: center;
+    }
+    .code-tab-btn {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .code-tab-btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text);
+    }
+    .code-tab-btn.active {
+      background: rgba(99, 102, 241, 0.15);
+      border-color: rgba(99, 102, 241, 0.4);
+      color: #ffffff;
+    }
+    .code-box-wrap {
+      position: relative;
+    }
+    .code-box {
+      background: rgba(7, 9, 14, 0.9);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      line-height: 1.6;
+      color: #93c5fd;
+      overflow-x: auto;
+      white-space: pre;
+    }
+    .code-box-copy {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+    }
+
     /* --- TOAST NOTIFICATION --- */
     #toast {
       position: fixed;
@@ -946,8 +1106,25 @@
           <div class="toolbar-spacer"></div>
           <select id="model" style="width:260px;font-weight:600;"></select>
           <span class="pill" id="effortBadge">reasoning default</span>
+          <button class="btn ghost btn-xs" id="btnChatClear" title="Bersihkan riwayat percakapan">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+            <span>Reset</span>
+          </button>
         </div>
-        <div class="msgs" id="msgs"></div>
+        <div class="msgs" id="msgs">
+          <div class="chat-empty" id="chatEmpty">
+            <div class="chat-empty-icon">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+            </div>
+            <h3>WorkBuddy AI Playground</h3>
+            <p>Pilih model di toolbar atas untuk menguji respons dan kecepatan API secara langsung.</p>
+            <div class="chat-chips">
+              <button class="chip-btn" data-prompt="Halo! Siapa namamu dan model AI apa yang sedang aktif?">Halo & info model</button>
+              <button class="chip-btn" data-prompt="Hitung 145 x 28 beserta penalaran singkat langkahnya.">Penalaran matematika</button>
+              <button class="chip-btn" data-prompt="Tuliskan fungsi debounce sederhana dalam JavaScript modern.">Contoh kode JS</button>
+            </div>
+          </div>
+        </div>
         <div class="composer">
           <div class="composer-inner">
             <textarea id="prompt" placeholder="Ketik pesan prompt… Tekan Enter untuk kirim, Shift+Enter untuk baris baru"></textarea>
@@ -1012,8 +1189,10 @@
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
             <span>Available Models & Reasoning Profiles</span>
           </h2>
+          <span class="pill ok" id="modelCountBadge">0 model</span>
           <div class="toolbar-spacer"></div>
           <div style="display:flex;align-items:center;gap:8px">
+            <input type="text" id="modelFilter" class="search-input" placeholder="Cari model..." />
             <span style="font-size:12px;font-weight:600;color:var(--text-muted)">Global Fallback:</span>
             <select id="globalEffort" style="width:145px;font-weight:600">
               <option value="">Off (Default)</option>
@@ -1038,6 +1217,7 @@
               </thead>
               <tbody id="modelRows"></tbody>
             </table>
+            <div class="empty" id="modelEmpty" style="display:none">Tidak ada model yang cocok dengan pencarian.</div>
           </div>
         </div>
       </section>
@@ -1051,6 +1231,7 @@
           </h2>
           <span class="pill ok" id="egMeta">0 endpoints</span>
           <div class="toolbar-spacer"></div>
+          <input type="text" id="egFilter" class="search-input" placeholder="Cari host / port / user..." />
           <select id="egMode" style="width:150px">
             <option value="roundrobin">Round-Robin</option>
             <option value="sticky">Sticky Session</option>
@@ -1109,6 +1290,7 @@
           </h2>
           <span class="pill ok" id="accRr">0 akun</span>
           <div class="toolbar-spacer"></div>
+          <input type="text" id="accFilter" class="search-input" placeholder="Cari akun / UID..." />
           <button class="btn" id="btnLogin">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
             <span>Login Akun Baru</span>
@@ -1128,10 +1310,12 @@
                   <th>Total Requests</th>
                   <th>Tokens (in / out)</th>
                   <th>Status Pool</th>
+                  <th style="width:110px">Aksi</th>
                 </tr>
               </thead>
               <tbody id="accRows"></tbody>
             </table>
+            <div class="empty" id="accEmpty" style="display:none">Tidak ada akun yang cocok dengan filter.</div>
             <div class="hint" id="loginHint" style="padding:14px"></div>
           </div>
         </div>
@@ -1144,16 +1328,55 @@
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
             <span>Credit Balance & Package Quota</span>
           </h2>
+          <span class="muted" id="credMeta" style="font-size:12px"></span>
+          <div class="toolbar-spacer"></div>
+          <input type="text" id="credFilter" class="search-input" placeholder="Cari akun / paket..." />
           <button class="btn ghost" id="btnCredRefresh">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
             <span>Refresh</span>
           </button>
           <button class="btn ghost" id="btnCredForce">Sync Real-time</button>
-          <span class="muted" id="credMeta" style="font-size:12px;margin-left:8px"></span>
-          <div id="credKpis">
-            <span class="kpi">Sisa Quota: <b id="kpiLeft" class="ok">—</b></span>
-            <span class="kpi">Terpakai: <b id="kpiUsed">—</b></span>
-            <span class="kpi">Total Quota: <b id="kpiTotal">—</b></span>
+        </div>
+        <div class="stats-grid" id="credKpisGrid" style="grid-template-columns: repeat(3, minmax(0, 1fr));">
+          <div class="stats-card">
+            <div class="stats-card-head">
+              <div class="stats-card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="m9 12 2 2 4-4"></path></svg>
+                <span>Sisa Quota Aktif</span>
+              </div>
+              <span class="pill ok" id="kpiPct">—</span>
+            </div>
+            <div class="stats-card-metric">
+              <span class="val ok" id="kpiLeft">—</span>
+              <span class="unit">credits tersisa</span>
+            </div>
+            <div class="pbar" style="margin-top:4px"><i id="kpiBar" style="width:0%;background:#10b981"></i></div>
+          </div>
+          <div class="stats-card">
+            <div class="stats-card-head">
+              <div class="stats-card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"></polyline><polyline points="17 18 23 18 23 12"></polyline></svg>
+                <span>Quota Terpakai</span>
+              </div>
+            </div>
+            <div class="stats-card-metric">
+              <span class="val" id="kpiUsed" style="color:#ffffff">—</span>
+              <span class="unit">credits</span>
+            </div>
+            <div class="stats-card-tokens">Terakumulasi dari seluruh paket aktif</div>
+          </div>
+          <div class="stats-card">
+            <div class="stats-card-head">
+              <div class="stats-card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+                <span>Total Kapasitas Quota</span>
+              </div>
+            </div>
+            <div class="stats-card-metric">
+              <span class="val" id="kpiTotal" style="color:#ffffff">—</span>
+              <span class="unit">credits kapasitas</span>
+            </div>
+            <div class="stats-card-tokens">Paket langganan, free harian & bonus</div>
           </div>
         </div>
         <div class="table-wrap">
@@ -1163,9 +1386,9 @@
                 <tr>
                   <th style="width:200px">Akun WorkBuddy</th>
                   <th>Nama Paket Upstream</th>
-                  <th style="width:140px">Sisa Quota</th>
-                  <th style="width:90px">Terpakai</th>
-                  <th style="width:90px">Total Quota</th>
+                  <th style="width:160px">Sisa Quota</th>
+                  <th style="width:100px">Terpakai</th>
+                  <th style="width:100px">Total Quota</th>
                   <th style="width:170px">Reset / Kadaluwarsa</th>
                 </tr>
               </thead>
@@ -1208,8 +1431,16 @@
                 <span>Salin API Key</span>
               </button>
             </div>
-            <div class="hint" id="copyHint" style="margin-top:14px">
-              Gunakan header <code>Authorization: Bearer &lt;api_key&gt;</code> pada klien seperti NextChat, Chatbox, LibreChat, atau Cursor.
+            <div style="margin-top:20px">
+              <div class="code-tabs">
+                <button class="code-tab-btn active" data-tab="curl">cURL</button>
+                <button class="code-tab-btn" data-tab="python">Python</button>
+                <button class="code-tab-btn" data-tab="node">Node.js</button>
+                <button class="btn ghost btn-xs code-box-copy" id="btnCopySnippet" style="margin-left:auto">Salin Code</button>
+              </div>
+              <div class="code-box-wrap">
+                <pre class="code-box" id="codeSnippet"></pre>
+              </div>
             </div>
           </div>
 
@@ -1220,9 +1451,11 @@
             </h3>
             <div class="kv">Versi Core Proxy: <b class="mono" id="verText">—</b></div>
             <div class="kv">WorkBuddy Chat API: <b>POST /v2/chat/completions (Tencent Cloud)</b></div>
-            <div class="kv">Format Reasoning Effort: <b>reasoning_effort (low / medium / high / max)</b></div>
+            <div class="kv">Format Reasoning Effort: <b>reasoning_effort (low / med / high / xhigh / max)</b></div>
+            <div class="kv">Global Fallback Engine: <b class="ok" id="cfgGlobalEffort">Aktif (Max)</b></div>
             <div class="kv">Rotasi Akun: <b>Otomatis Round-Robin saat jumlah akun &gt; 1</b></div>
             <div class="kv">Egress Multi-IP: <b>Round-Robin proxy untuk mencegah rate limit</b></div>
+            <div class="kv">Auto Safe-Clamping: <b class="ok">Aktif (otomatis meng-clamp ke batas model)</b></div>
           </div>
         </div>
       </section>
@@ -1240,9 +1473,12 @@
     let proxyKey = "«redacted:sk-…»";
     let loginTimer = null;
     let modelsMeta = [];
+    let accountsData = [];
+    let creditsData = null;
     let egHealth = {};
     let lastEgress = { items: [], enabled: false, mode: "roundrobin", count: 0 };
     let lastModelSig = "";
+    let activeCodeTab = "curl";
     const PREF_MODEL = "wb.model";
 
     function showToast(msg) {
@@ -1310,7 +1546,20 @@
       const box = $("modelRows");
       if (!box) return;
       const glob = ($("globalEffort") && $("globalEffort").value) || "";
-      box.innerHTML = modelsMeta.map((m) => {
+      const q = ($("modelFilter") ? $("modelFilter").value.trim().toLowerCase() : "");
+      const list = modelsMeta.filter((m) => {
+        if (!q) return true;
+        return (m.id && m.id.toLowerCase().includes(q)) || (m.name && m.name.toLowerCase().includes(q));
+      });
+
+      if ($("modelCountBadge")) {
+        $("modelCountBadge").textContent = q ? (list.length + " / " + modelsMeta.length + " model") : (modelsMeta.length + " model");
+      }
+      if ($("modelEmpty")) {
+        $("modelEmpty").style.display = list.length ? "none" : "block";
+      }
+
+      box.innerHTML = list.map((m) => {
         const efforts = m.reasoning_efforts || [];
         const def = m.default_effort || "";
         const cur = m.selected_effort || "";
@@ -1341,6 +1590,8 @@
     }
 
     function addMsg(role, text) {
+      const ce = $("chatEmpty");
+      if (ce) ce.style.display = "none";
       const el = document.createElement("div");
       el.className = "msg " + role;
       const roleLabel = role === "user" ? "Anda" : "Assistant (WorkBuddy)";
@@ -1371,13 +1622,18 @@
     function renderProxies(eg) {
       lastEgress = eg || lastEgress;
       const items = lastEgress.items || [];
-      $("egEmpty").style.display = items.length ? "none" : "block";
-      $("egRows").innerHTML = items.map((it) => {
+      const q = ($("egFilter") ? $("egFilter").value.trim().toLowerCase() : "");
+      const filtered = items.filter((it) => {
+        if (!q) return true;
+        return (it.host && it.host.toLowerCase().includes(q)) || (String(it.port).includes(q)) || (it.user && it.user.toLowerCase().includes(q));
+      });
+      $("egEmpty").style.display = filtered.length ? "none" : "block";
+      $("egRows").innerHTML = filtered.map((it) => {
         const h = egHealth[it.label];
         let st = '<span class="pill">unknown</span>';
         if (h) st = h.ok
-          ? '<span class="pill ok">' + (h.ip || "online") + "</span>"
-          : '<span class="pill bad">unreachable</span>';
+          ? '<span class="pill ok"><span class="pulse-dot"></span>' + (h.ip || "online") + "</span>"
+          : '<span class="pill bad"><span class="pulse-dot bad"></span>mati</span>';
         return '<tr data-label="' + it.label.replace(/"/g, "") + '">' +
           '<td><input type="checkbox" class="eg-cb" /></td>' +
           '<td class="mono" style="color:#ffffff">' + it.host + "</td>" +
@@ -1467,16 +1723,21 @@
       el.className = tone || "";
     }
     function renderCredits(data) {
+      creditsData = data || creditsData;
+      data = creditsData;
       const list = (data && data.accounts) || [];
       const rows = [];
       let gLeft = 0, gUsed = 0, gTotal = 0, okCount = 0;
       const esc = (s) => String(s == null ? "" : s).replace(/[<>&]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]));
+      const q = ($("credFilter") ? $("credFilter").value.trim().toLowerCase() : "");
 
       list.forEach((a) => {
         const acct = esc(a.account || "—");
         if (!a.ok) {
-          rows.push('<tr class="grp-first"><td class="pkg">' + acct + "</td>" +
-            '<td colspan="5"><span class="err">' + esc(a.error || "Gagal sinkron") + "</span></td></tr>");
+          if (!q || acct.toLowerCase().includes(q)) {
+            rows.push('<tr class="grp-first"><td class="pkg">' + acct + "</td>" +
+              '<td colspan="5"><span class="err">' + esc(a.error || "Gagal sinkron") + "</span></td></tr>");
+          }
           return;
         }
         okCount++;
@@ -1485,15 +1746,20 @@
         gTotal += a.usageTotal || 0;
         const res = a.resources || [];
         if (!res.length) {
-          rows.push('<tr class="grp-first"><td class="pkg">' + acct + "</td>" +
-            '<td class="muted" colspan="5">Tidak ada paket aktif</td></tr>');
+          if (!q || acct.toLowerCase().includes(q)) {
+            rows.push('<tr class="grp-first"><td class="pkg">' + acct + "</td>" +
+              '<td class="muted" colspan="5">Tidak ada paket aktif</td></tr>');
+          }
           return;
         }
-        res.forEach((r, i) => {
+        let renderedFirst = false;
+        res.forEach((r) => {
+          const match = !q || acct.toLowerCase().includes(q) || (r.name && r.name.toLowerCase().includes(q)) || (r.packageCode && r.packageCode.toLowerCase().includes(q));
+          if (!match) return;
           const when = r.isDaily ? r.refreshAt : r.expireAt;
           const pct = pctOf(r.left, r.total);
           rows.push('<tr>' +
-            "<td>" + (i === 0 ? '<div style="font-weight:600;color:#ffffff">' + acct + '</div>' : '') + "</td>" +
+            "<td>" + (!renderedFirst ? '<div style="font-weight:600;color:#ffffff">' + acct + '</div>' : '') + "</td>" +
             '<td><span class="pkg">' + esc(r.name) + "</span>" +
               (r.isDaily ? '<span class="lbl-daily">harian</span>' : "") +
               '<div class="pkgcode">' + esc(r.packageCode) + "</div></td>" +
@@ -1502,6 +1768,7 @@
             '<td class="num-cell muted">' + fmtNum(r.used) + "</td>" +
             '<td class="num-cell muted">' + fmtNum(r.total) + "</td>" +
             '<td class="muted" style="font-size:12px">' + fmtDate(when) + "</td></tr>");
+          renderedFirst = true;
         });
       });
 
@@ -1509,9 +1776,17 @@
       $("credEmpty").style.display = rows.length ? "none" : "block";
 
       const pct = pctOf(gLeft, gTotal);
-      setKpi("kpiLeft", fmtNum(gLeft) + (gTotal ? " (" + pct.toFixed(0) + "%)" : ""), toneOf(pct));
-      setKpi("kpiUsed", fmtNum(gUsed), "");
-      setKpi("kpiTotal", fmtNum(gTotal), "");
+      if ($("kpiLeft")) $("kpiLeft").textContent = fmtNum(gLeft);
+      if ($("kpiUsed")) $("kpiUsed").textContent = fmtNum(gUsed);
+      if ($("kpiTotal")) $("kpiTotal").textContent = fmtNum(gTotal);
+      if ($("kpiPct")) {
+        $("kpiPct").textContent = gTotal ? (pct.toFixed(0) + "% tersisa") : "—";
+        $("kpiPct").className = "pill " + toneOf(pct);
+      }
+      if ($("kpiBar")) {
+        $("kpiBar").style.width = pct.toFixed(1) + "%";
+        $("kpiBar").style.background = pct > 40 ? "#10b981" : pct > 15 ? "#f59e0b" : "#ef4444";
+      }
       $("credMeta").textContent = data && data.fetchedAt
         ? okCount + "/" + list.length + " akun · Sinkron: " + new Date(data.fetchedAt).toLocaleTimeString()
         : "";
@@ -1528,6 +1803,110 @@
     }
     function esc0(s) {
       return String(s == null ? "" : s).slice(0, 120).replace(/[<>&]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]));
+    }
+
+    function renderAccounts() {
+      const box = $("accRows");
+      if (!box) return;
+      const q = ($("accFilter") ? $("accFilter").value.trim().toLowerCase() : "");
+      const list = (accountsData || []).filter((a) => {
+        if (!q) return true;
+        return (a.email && a.email.toLowerCase().includes(q)) || (a.uid && a.uid.toLowerCase().includes(q)) || (a.id && a.id.toLowerCase().includes(q));
+      });
+      if ($("accEmpty")) {
+        $("accEmpty").style.display = list.length ? "none" : "block";
+      }
+      box.innerHTML = list.map((a) => {
+        const isOk = !a.disabled;
+        const stPill = isOk
+          ? '<span class="pill ok"><span class="pulse-dot"></span>ready</span>'
+          : '<span class="pill bad" title="' + esc0(a.last_error || 'error') + '">error</span>';
+        const tokText = fmtK(a.tokens_in || 0) + " in / " + fmtK(a.tokens_out || 0) + " out";
+        const accId = a.id || a.uid || a.email;
+        return "<tr>" +
+          "<td><div style='font-weight:600;color:#ffffff'>" + (a.email || "—") + "</div></td>" +
+          "<td class='mono muted' style='font-size:11px'>" + (a.uid || "").slice(0, 12) + "…</td>" +
+          "<td><b style='color:#ffffff'>" + (a.requests || 0) + "</b></td>" +
+          "<td class='mono' style='font-size:11.5px'>" + tokText + "</td>" +
+          "<td>" + stPill + "</td>" +
+          "<td><div class='action-cell'>" +
+            '<button class="btn ghost btn-xs acc-refresh" data-id="' + accId + '" title="Refresh Token Upstream"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>Sync</button>' +
+            '<button class="btn bad btn-xs acc-del" data-id="' + accId + '" title="Hapus dari Pool"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>' +
+          "</div></td></tr>";
+      }).join("");
+
+      box.querySelectorAll(".acc-refresh").forEach((btn) => {
+        btn.onclick = async () => {
+          btn.disabled = true;
+          const out = await jpost("/admin/accounts/" + encodeURIComponent(btn.dataset.id) + "/refresh");
+          btn.disabled = false;
+          if (out && !out.error) {
+            showToast("Token akun berhasil direfresh");
+            refreshState();
+          } else {
+            showToast("Gagal refresh: " + (out.error || "error"));
+          }
+        };
+      });
+
+      box.querySelectorAll(".acc-del").forEach((btn) => {
+        btn.onclick = async () => {
+          if (!confirm("Hapus akun " + btn.dataset.id + " dari pool?")) return;
+          const res = await fetch("/admin/accounts/" + encodeURIComponent(btn.dataset.id), { method: "DELETE" });
+          const out = await res.json().catch(() => ({}));
+          if (out && out.ok) {
+            showToast("Akun berhasil dihapus dari pool");
+            refreshState();
+          } else {
+            showToast("Gagal menghapus akun");
+          }
+        };
+      });
+    }
+
+    function updateCodeSnippet() {
+      const base = $("baseUrl").textContent || "http://43.134.237.52:8790/v1";
+      const key = proxyKey || "your-api-key";
+      const el = $("codeSnippet");
+      if (!el) return;
+
+      if (activeCodeTab === "curl") {
+        el.textContent = `curl ${base}/chat/completions \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer ${key}" \\
+  -d '{
+    "model": "deepseek-v4.1-flash",
+    "messages": [{"role": "user", "content": "Halo AI!"}],
+    "stream": false
+  }'`;
+      } else if (activeCodeTab === "python") {
+        el.textContent = `from openai import OpenAI
+
+client = OpenAI(
+    base_url="${base}",
+    api_key="${key}"
+)
+
+resp = client.chat.completions.create(
+    model="deepseek-v4.1-flash",
+    messages=[{"role": "user", "content": "Halo AI!"}],
+    reasoning_effort="high"
+)
+print(resp.choices[0].message.content)`;
+      } else if (activeCodeTab === "node") {
+        el.textContent = `import OpenAI from "openai";
+
+const openai = new OpenAI({
+  baseURL: "${base}",
+  apiKey: "${key}",
+});
+
+const res = await openai.chat.completions.create({
+  model: "deepseek-v4.1-flash",
+  messages: [{ role: "user", content: "Halo AI!" }],
+});
+console.log(res.choices[0].message.content);`;
+      }
     }
 
     function fmtK(n) {
@@ -1593,7 +1972,7 @@
     async function refreshState() {
       const s = await jget("/admin/state");
       if (s.status === 401) { location.href = "/login"; return; }
-      if (!s.ok) { $("statusPill").textContent = "admin error"; $("statusPill").className = "pill bad"; return; }
+      if (!s.ok) { $("statusPill").innerHTML = '<span class="pulse-dot bad"></span>admin error'; $("statusPill").className = "pill bad"; return; }
       proxyKey = s.api_key || s.proxy_key || proxyKey;
       $("apiKey").textContent = proxyKey;
       $("baseUrl").textContent = s.base_url || "http://43.134.237.52:8790/v1";
@@ -1603,22 +1982,19 @@
         $("verPill").title = "workbuddy-proxy v" + s.version;
         $("verText").textContent = "v" + s.version;
       }
-      const n = (s.accounts || []).filter((a) => !a.disabled).length;
-      $("statusPill").textContent = n ? n + " akun aktif" + (s.account_rr ? " · RR" : "") : "belum login";
+      accountsData = s.accounts || [];
+      const n = accountsData.filter((a) => !a.disabled).length;
+      $("statusPill").innerHTML = '<span class="pulse-dot"></span>' + (n ? n + " akun aktif" + (s.account_rr ? " · RR" : "") : "belum login");
       $("statusPill").className = "pill" + (n ? " ok" : " warn");
       $("accRr").textContent = s.account_rr ? n + " akun · roundrobin ON" : n + " akun · single mode";
       $("accRr").className = "pill" + (s.account_rr ? " ok" : "");
+      if ($("cfgGlobalEffort")) {
+        $("cfgGlobalEffort").textContent = s.globalEffort ? ("Aktif (" + s.globalEffort + ")") : "Off (Default)";
+      }
       applyEgress(s.egress);
       renderRequests(s.requests || []);
       renderStats(s.stats);
-      $("accRows").innerHTML = (s.accounts || []).map((a) =>
-        "<tr>" +
-        "<td><div style='font-weight:600;color:#ffffff'>" + (a.email || "—") + "</div></td>" +
-        "<td class='mono muted'>" + (a.uid || "").slice(0, 12) + "…</td>" +
-        "<td><b style='color:#ffffff'>" + (a.requests || 0) + "</b></td>" +
-        "<td class='mono'>" + (a.tokens_in || 0) + " in / " + (a.tokens_out || 0) + " out</td>" +
-        "<td><span class='pill " + (a.disabled ? "bad" : "ok") + "'>" + (a.disabled ? "dinonaktifkan" : "ready") + "</span></td></tr>"
-      ).join("");
+      renderAccounts();
       const sel = $("model");
       const cur = sel.value || localStorage.getItem(PREF_MODEL) || "";
       modelsMeta = s.models || [];
@@ -1635,6 +2011,7 @@
         lastModelSig = sig;
         renderModels();
       }
+      updateCodeSnippet();
     }
 
     if ($("globalEffort")) {
@@ -1646,10 +2023,62 @@
           fillEffort($("model").value);
           lastModelSig = modelsMeta.map((m) => m.id + ":" + (m.selected_effort || "")).join(",") + ":" + (out.globalEffort || val);
           renderModels();
+          if ($("cfgGlobalEffort")) $("cfgGlobalEffort").textContent = val ? ("Aktif (" + val + ")") : "Off (Default)";
           showToast(val ? ("Global Fallback reasoning: " + val) : "Global Fallback dinonaktifkan");
         }
       };
     }
+
+    if ($("modelFilter")) $("modelFilter").oninput = renderModels;
+    if ($("accFilter")) $("accFilter").oninput = renderAccounts;
+    if ($("egFilter")) $("egFilter").oninput = () => renderProxies(lastEgress);
+    if ($("credFilter")) $("credFilter").oninput = () => renderCredits(creditsData);
+
+    document.querySelectorAll(".code-tab-btn").forEach((btn) => {
+      btn.onclick = () => {
+        document.querySelectorAll(".code-tab-btn").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        activeCodeTab = btn.dataset.tab;
+        updateCodeSnippet();
+      };
+    });
+    if ($("btnCopySnippet")) {
+      $("btnCopySnippet").onclick = () => {
+        const txt = $("codeSnippet").textContent;
+        copyText(txt, "Code Snippet");
+      };
+    }
+
+    if ($("btnChatClear")) {
+      $("btnChatClear").onclick = () => {
+        $("msgs").innerHTML = `
+          <div class="chat-empty" id="chatEmpty">
+            <div class="chat-empty-icon">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+            </div>
+            <h3>WorkBuddy AI Playground</h3>
+            <p>Pilih model di toolbar atas untuk menguji respons dan kecepatan API secara langsung.</p>
+            <div class="chat-chips">
+              <button class="chip-btn" data-prompt="Halo! Siapa namamu dan model AI apa yang sedang aktif?">Halo & info model</button>
+              <button class="chip-btn" data-prompt="Hitung 145 x 28 beserta penalaran singkat langkahnya.">Penalaran matematika</button>
+              <button class="chip-btn" data-prompt="Tuliskan fungsi debounce sederhana dalam JavaScript modern.">Contoh kode JS</button>
+            </div>
+          </div>
+        `;
+        bindChips();
+        showToast("Riwayat chat dibersihkan");
+      };
+    }
+
+    function bindChips() {
+      document.querySelectorAll(".chip-btn").forEach((chip) => {
+        chip.onclick = () => {
+          $("prompt").value = chip.dataset.prompt;
+          $("prompt").focus();
+        };
+      });
+    }
+    bindChips();
 
     $("egSwitch").onchange = async () => {
       const out = await jpost("/admin/egress", { enabled: $("egSwitch").checked });
