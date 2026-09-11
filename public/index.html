@@ -900,7 +900,18 @@
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
             <span>Available Models & Reasoning Profiles</span>
           </h2>
-          <span class="muted" style="font-size:12.5px">Setelan reasoning tersimpan otomatis per model untuk panggilan API & Chat.</span>
+          <div class="toolbar-spacer"></div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:12px;font-weight:600;color:var(--text-muted)">Global Fallback:</span>
+            <select id="globalEffort" style="width:145px;font-weight:600">
+              <option value="">Off (Default)</option>
+              <option value="low">Low</option>
+              <option value="medium">Med</option>
+              <option value="high">High</option>
+              <option value="xhigh">XHigh</option>
+              <option value="max">Max</option>
+            </select>
+          </div>
         </div>
         <div class="table-wrap">
           <div class="table-card">
@@ -1152,29 +1163,47 @@
       const efforts = m.reasoning_efforts || [];
       const def = m.default_effort || "default";
       const stored = savedEffort(modelId);
-      const pick = (stored && efforts.indexOf(stored) >= 0) ? stored : "";
+      const glob = ($("globalEffort") && $("globalEffort").value) || "";
       const badge = $("effortBadge");
-      if (badge) {
-        badge.textContent = pick ? ("effort: " + pick) : ("effort: " + def);
-        badge.className = "pill" + (pick ? " ok" : "");
+      if (!badge) return;
+      if (!efforts.length) {
+        badge.textContent = "non-reasoning";
+        badge.className = "pill";
+        return;
+      }
+      if (stored && efforts.indexOf(stored) >= 0) {
+        badge.textContent = "effort: " + stored;
+        badge.className = "pill ok";
+      } else if (glob) {
+        badge.textContent = "effort: " + glob + " (global)";
+        badge.className = "pill ok";
+      } else {
+        badge.textContent = "effort: " + def;
+        badge.className = "pill";
       }
     }
 
     function currentEffort(modelId) {
       const m = modelsMeta.find((x) => x.id === modelId) || {};
       const efforts = m.reasoning_efforts || [];
+      if (!efforts.length) return "";
       const stored = savedEffort(modelId);
-      return (stored && efforts.indexOf(stored) >= 0) ? stored : "";
+      if (stored && efforts.indexOf(stored) >= 0) return stored;
+      const glob = ($("globalEffort") && $("globalEffort").value) || "";
+      if (glob) return glob;
+      return "";
     }
 
     function renderModels() {
       const box = $("modelRows");
       if (!box) return;
+      const glob = ($("globalEffort") && $("globalEffort").value) || "";
       box.innerHTML = modelsMeta.map((m) => {
         const efforts = m.reasoning_efforts || [];
         const def = m.default_effort || "";
         const cur = m.selected_effort || "";
-        const opts = ['<option value="">default' + (def ? " (" + def + ")" : "") + "</option>"]
+        const fallbackText = glob && efforts.length ? ("default (global: " + glob + ")") : ("default" + (def ? " (" + def + ")" : ""));
+        const opts = ['<option value="">' + fallbackText + "</option>"]
           .concat(efforts.map((e) => '<option value="' + e + '"' + (e === cur ? " selected" : "") + ">" + e + "</option>"));
         const avail = efforts.length ? efforts.map(e => '<span class="pill" style="margin-right:4px">' + e + '</span>').join("") : '<span class="muted">fixed</span>';
         return "<tr>" +
@@ -1444,16 +1473,33 @@
       const sel = $("model");
       const cur = sel.value || localStorage.getItem(PREF_MODEL) || "";
       modelsMeta = s.models || [];
+      if ($("globalEffort") && s.globalEffort !== undefined && document.activeElement !== $("globalEffort")) {
+        $("globalEffort").value = s.globalEffort || "";
+      }
       sel.innerHTML = modelsMeta.map((m) => '<option value="' + m.id + '">' + (m.name || m.id) + (m.credits ? " (" + m.credits + ")" : "") + "</option>").join("");
       if (cur) sel.value = cur;
       if (!sel.value && modelsMeta[0]) sel.value = modelsMeta[0].id;
       if (sel.value) localStorage.setItem(PREF_MODEL, sel.value);
       fillEffort(sel.value);
-      const sig = modelsMeta.map((m) => m.id + ":" + (m.selected_effort || "")).join(",");
+      const sig = modelsMeta.map((m) => m.id + ":" + (m.selected_effort || "")).join(",") + ":" + (s.globalEffort || "");
       if (sig !== lastModelSig) {
         lastModelSig = sig;
         renderModels();
       }
+    }
+
+    if ($("globalEffort")) {
+      $("globalEffort").onchange = async () => {
+        const val = $("globalEffort").value;
+        const out = await jpost("/admin/effort", { globalEffort: val });
+        if (out.ok) {
+          if (out.models) modelsMeta = out.models;
+          fillEffort($("model").value);
+          lastModelSig = modelsMeta.map((m) => m.id + ":" + (m.selected_effort || "")).join(",") + ":" + (out.globalEffort || val);
+          renderModels();
+          showToast(val ? ("Global Fallback reasoning: " + val) : "Global Fallback dinonaktifkan");
+        }
+      };
     }
 
     $("egSwitch").onchange = async () => {

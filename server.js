@@ -32,8 +32,15 @@ const UA = cfg.userAgent || ("WorkBuddyAI/" + CLIENT_VER);
 const CHAT_PATH = cfg.chatPath || "/v2/chat/completions";
 const MODELS_PATH = cfg.modelsPath || "/v3/config";
 const SYS_PROMPT = cfg.systemPrompt || "You are a helpful assistant.";
-const PROXY_KEY = cfg.proxyKey || "sk-wb-local-change-me";
+const PROXY_KEY = cfg.proxyKey || "«redacted:sk-…»";
 if (!cfg.effortByModel || typeof cfg.effortByModel !== "object") cfg.effortByModel = {};
+if (cfg.globalEffort) {
+  let g = String(cfg.globalEffort).trim().toLowerCase();
+  if (g === "med") g = "medium";
+  if (g === "x high" || g === "x-high") g = "xhigh";
+  if (g === "default" || g === "auto" || g === "none" || g === "off") delete cfg.globalEffort;
+  else cfg.globalEffort = g;
+}
 
 if (!cfg.egress || typeof cfg.egress !== "object") cfg.egress = { enabled: false, mode: "roundrobin", file: "proxies.txt", list: [] };
 const pool = egressLib.createPool({ enabled: !!cfg.egress.enabled, mode: cfg.egress.mode || "roundrobin" });
@@ -542,18 +549,70 @@ async function maybeRefresh(acc) {
   }
 }
 
+const NON_REASONING_MODELS = new Set([
+  "default-model",
+  "deep-model",
+  "gemini-3.5-flash",
+]);
+
+const XHIGH_ONLY_MODELS = new Set([
+  "gpt-5.5",
+  "gpt-5.4",
+  "gpt-5.3-codex",
+  "primary-model",
+]);
+
+const ALL_EFFORTS_MAX = ["low", "medium", "high", "xhigh", "max"];
+const ALL_EFFORTS_XHIGH = ["low", "medium", "high", "xhigh"];
+
 function reasoningMeta(m) {
+  const id = (m && m.id) || "";
   const r = m && m.reasoning && typeof m.reasoning === "object" ? m.reasoning : {};
-  const efforts = Array.isArray(r.supportedEfforts) && r.supportedEfforts.length
+  const rawEfforts = Array.isArray(r.supportedEfforts) && r.supportedEfforts.length
     ? r.supportedEfforts.slice()
     : (r.effort ? [r.effort] : []);
+
+  const isNon = NON_REASONING_MODELS.has(id);
+  const supportsReasoning = !isNon && !!(
+    m && (
+      m.supportsReasoning ||
+      m.onlyReasoning ||
+      rawEfforts.length ||
+      id.includes("deepseek") ||
+      id.includes("kimi") ||
+      id.includes("glm") ||
+      id.includes("hy") ||
+      id.includes("fast-") ||
+      id.includes("balanced-") ||
+      id.includes("primary-") ||
+      id.startsWith("gpt-")
+    )
+  );
+
+  let efforts = [];
+  if (supportsReasoning) {
+    if (XHIGH_ONLY_MODELS.has(id)) {
+      efforts = ALL_EFFORTS_XHIGH.slice();
+    } else {
+      efforts = ALL_EFFORTS_MAX.slice();
+    }
+  }
+
+  const defEffort = r.defaultEffort || r.effort || (supportsReasoning ? "high" : "");
+  const reasoningObj = supportsReasoning ? Object.assign({}, r, {
+    effort: defEffort,
+    defaultEffort: defEffort,
+    supportedEfforts: efforts,
+    summary: r.summary || "auto",
+  }) : undefined;
+
   return {
-    supports_reasoning: !!(m && (m.supportsReasoning || m.onlyReasoning || efforts.length)),
+    supports_reasoning: supportsReasoning,
     only_reasoning: !!(m && m.onlyReasoning),
     can_disable_thinking: !!r.canDisableThinking,
-    default_effort: r.defaultEffort || r.effort || "",
+    default_effort: defEffort,
     reasoning_efforts: efforts,
-    reasoning: Object.keys(r).length ? r : undefined,
+    reasoning: reasoningObj,
   };
 }
 
@@ -633,6 +692,8 @@ function openaiModels() {
     { id: "balanced-model", object: "model", created: 0, owned_by: "workbuddy" },
     { id: "primary-model", object: "model", created: 0, owned_by: "workbuddy" },
     { id: "deep-model", object: "model", created: 0, owned_by: "workbuddy" },
+    { id: "deepseek-v4.1-flash", object: "model", created: 0, owned_by: "workbuddy", name: "Deepseek-V4.1-Flash" },
+    { id: "gpt-6-astra", object: "model", created: 0, owned_by: "workbuddy", name: "GPT-6-Astra" },
     { id: "hy3", object: "model", created: 0, owned_by: "workbuddy" },
     { id: "hy4-preview", object: "model", created: 0, owned_by: "workbuddy", name: "Hy4-Preview", credits: "x0.00" },
     { id: "gpt-5.6-sol", object: "model", created: 0, owned_by: "workbuddy" },
@@ -647,7 +708,25 @@ function openaiModels() {
     { id: "kimi-k3", object: "model", created: 0, owned_by: "workbuddy" },
     { id: "kimi-k2.6", object: "model", created: 0, owned_by: "workbuddy" },
     { id: "minimax-m3", object: "model", created: 0, owned_by: "workbuddy" },
-  ];
+  ].map(function (m) {
+    const meta = reasoningMeta(m);
+    return Object.assign({
+      object: "model",
+      created: 0,
+      owned_by: "workbuddy",
+      name: m.name || m.id,
+      credits: m.credits || "",
+      vendor: m.vendor || "",
+      supports_tools: m.supportsToolCall !== false,
+      supports_images: !!m.supportsImages,
+      supports_reasoning: meta.supports_reasoning,
+      only_reasoning: meta.only_reasoning,
+      can_disable_thinking: meta.can_disable_thinking,
+      default_effort: meta.default_effort,
+      reasoning_efforts: meta.reasoning_efforts,
+      reasoning: meta.reasoning,
+    }, m);
+  });
   const list = mergeExtraModels(modelsCache.list.length ? modelsCache.list : fallback).map(function (m) {
     const selected = (cfg.effortByModel && cfg.effortByModel[m.id]) || "";
     return Object.assign({}, m, { selected_effort: selected });
@@ -688,9 +767,121 @@ function normalizeMessages(messages) {
   });
 }
 
+const EFFORT_RANKS = {
+  "low": 1,
+  "med": 2,
+  "medium": 2,
+  "high": 3,
+  "xhigh": 4,
+  "x-high": 4,
+  "x high": 4,
+  "max": 5,
+};
+
+function normalizeEffort(raw) {
+  if (!raw) return "";
+  let v = String(raw).trim().toLowerCase();
+  if (v === "default" || v === "auto" || v === "none" || v === "off") return "";
+  if (v === "med") return "medium";
+  if (v === "x high" || v === "x-high") return "xhigh";
+  return v;
+}
+
+function getModelReasoningMeta(modelId) {
+  const models = openaiModels().data;
+  for (let i = 0; i < models.length; i++) {
+    if (models[i].id === modelId) return models[i];
+  }
+  return reasoningMeta({ id: modelId });
+}
+
+function clampEffortForModel(modelId, rawEffort) {
+  const effort = normalizeEffort(rawEffort);
+  if (!effort) return "";
+  if (NON_REASONING_MODELS.has(modelId)) return "";
+
+  const meta = getModelReasoningMeta(modelId);
+  if (!meta || !meta.supports_reasoning) return "";
+
+  const supported = Array.isArray(meta.reasoning_efforts) && meta.reasoning_efforts.length
+    ? meta.reasoning_efforts
+    : (XHIGH_ONLY_MODELS.has(modelId) ? ALL_EFFORTS_XHIGH : ALL_EFFORTS_MAX);
+
+  if (!supported.length) return "";
+  if (supported.indexOf(effort) >= 0) return effort;
+
+  const reqRank = EFFORT_RANKS[effort] || 0;
+  if (!reqRank) return "";
+
+  // Cari batas tertinggi yang didukung model ini
+  let maxEffort = supported[0];
+  let maxRank = EFFORT_RANKS[maxEffort] || 0;
+  for (let i = 0; i < supported.length; i++) {
+    const s = supported[i];
+    const r = EFFORT_RANKS[s] || 0;
+    if (r > maxRank) {
+      maxRank = r;
+      maxEffort = s;
+    }
+  }
+
+  // Otomatis meng-clamp ke batas tertinggi yang didukung jika melebihi
+  if (reqRank >= maxRank) return maxEffort;
+
+  // Jika di bawah tapi nilai tidak persis cocok
+  let best = maxEffort;
+  let bestDist = Infinity;
+  for (let i = 0; i < supported.length; i++) {
+    const s = supported[i];
+    const r = EFFORT_RANKS[s] || 0;
+    const dist = Math.abs(r - reqRank);
+    if (dist < bestDist) {
+      bestDist = dist;
+      best = s;
+    }
+  }
+  return best;
+}
+
+function pickReasoningEffort(body) {
+  if (!body || typeof body !== "object") return "";
+  const raw = body.reasoning_effort || body.reasoningEffort
+    || (body.reasoning && typeof body.reasoning === "object" && body.reasoning.effort)
+    || "";
+  let v = normalizeEffort(raw);
+  const model = body.model || "default-model";
+
+  if (!v) {
+    v = normalizeEffort((cfg.effortByModel && cfg.effortByModel[model]) || "");
+  }
+  if (!v && cfg.globalEffort) {
+    v = normalizeEffort(cfg.globalEffort);
+  }
+  return v;
+}
+
+function setModelEffort(modelId, effort) {
+  if (!modelId) return false;
+  if (!cfg.effortByModel || typeof cfg.effortByModel !== "object") cfg.effortByModel = {};
+  let v = normalizeEffort(effort);
+  if (!v) delete cfg.effortByModel[modelId];
+  else cfg.effortByModel[modelId] = v;
+  persistCfg();
+  return true;
+}
+
+function setGlobalEffort(effort) {
+  let v = normalizeEffort(effort);
+  if (!v) delete cfg.globalEffort;
+  else cfg.globalEffort = v;
+  persistCfg();
+  return true;
+}
+
 function buildUpstreamBody(body) {
+  const model = body.model || "default-model";
   const out = {
-    model: body.model || "default-model",
+    model: model,
     messages: normalizeMessages(body.messages || []),
     stream: true,
   };
@@ -702,34 +893,13 @@ function buildUpstreamBody(body) {
   if (body.tools) out.tools = body.tools;
   if (body.tool_choice) out.tool_choice = body.tool_choice;
   if (body.response_format) out.response_format = body.response_format;
-  const effort = pickReasoningEffort(body);
-  if (effort) out.reasoning_effort = effort;
-  return out;
-}
 
-function pickReasoningEffort(body) {
-  if (!body || typeof body !== "object") return "";
-  const raw = body.reasoning_effort || body.reasoningEffort
-    || (body.reasoning && typeof body.reasoning === "object" && body.reasoning.effort)
-    || "";
-  let v = String(raw).trim().toLowerCase();
-  if (v === "default" || v === "auto" || v === "none" || v === "off") v = "";
-  if (!v) {
-    const model = body.model || "default-model";
-    v = String((cfg.effortByModel && cfg.effortByModel[model]) || "").trim().toLowerCase();
-    if (v === "default" || v === "auto" || v === "none" || v === "off") v = "";
+  const rawEffort = pickReasoningEffort(body);
+  const clampedEffort = clampEffortForModel(model, rawEffort);
+  if (clampedEffort) {
+    out.reasoning_effort = clampedEffort;
   }
-  return v;
-}
-
-function setModelEffort(modelId, effort) {
-  if (!modelId) return false;
-  if (!cfg.effortByModel || typeof cfg.effortByModel !== "object") cfg.effortByModel = {};
-  const v = String(effort || "").trim().toLowerCase();
-  if (!v || v === "default" || v === "auto" || v === "none" || v === "off") delete cfg.effortByModel[modelId];
-  else cfg.effortByModel[modelId] = v;
-  persistCfg();
-  return true;
+  return out;
 }
 
 function parseSseBlock(block) {
@@ -1302,6 +1472,7 @@ async function onRequest(req, res) {
           account_rr: usableAccounts().length > 1,
           models: openaiModels().data,
           effortByModel: cfg.effortByModel || {},
+          globalEffort: cfg.globalEffort || "",
           egress: eg,
           requests: publicRequests(40),
           stats: usageStats(),
@@ -1358,16 +1529,32 @@ async function onRequest(req, res) {
       if (p === "/admin/effort" && req.method === "POST") {
         const raw = await readBody(req);
         const j = JSON.parse(raw.toString("utf8") || "{}");
+        let touched = false;
+        if (j.globalEffort !== undefined) {
+          setGlobalEffort(j.globalEffort);
+          touched = true;
+        } else if (j.global !== undefined) {
+          setGlobalEffort(j.global);
+          touched = true;
+        }
         if (j.map && typeof j.map === "object") {
           cfg.effortByModel = {};
           Object.keys(j.map).forEach(function (id) { setModelEffort(id, j.map[id]); });
+          touched = true;
         } else if (j.model) {
           setModelEffort(j.model, j.effort);
-        } else {
-          send(res, 400, { error: "need model+effort or map" });
+          touched = true;
+        }
+        if (!touched) {
+          send(res, 400, { error: "need model+effort, map, or globalEffort" });
           return;
         }
-        send(res, 200, { ok: true, effortByModel: cfg.effortByModel || {}, models: openaiModels().data });
+        send(res, 200, {
+          ok: true,
+          effortByModel: cfg.effortByModel || {},
+          globalEffort: cfg.globalEffort || "",
+          models: openaiModels().data
+        });
         return;
       }
       if (p === "/admin/egress/add" && req.method === "POST") {
