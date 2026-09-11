@@ -763,6 +763,8 @@ function normalizeMessages(messages) {
     if (m.name) out.name = m.name;
     if (m.tool_call_id) out.tool_call_id = m.tool_call_id;
     if (m.tool_calls) out.tool_calls = m.tool_calls;
+    if (m.reasoning_content != null) out.reasoning_content = m.reasoning_content;
+    else if (m.thinking != null) out.reasoning_content = m.thinking;
     return out;
   });
 }
